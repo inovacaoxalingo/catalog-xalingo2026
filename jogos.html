@@ -202,40 +202,6 @@
   @keyframes flash-result { 0%{opacity:.4} 100%{opacity:1} }
   .sb-result-item.highlight-flash { animation: flash-result 0.5s ease; }
 
-
-  /* ===== PRICE OVERLAYS ===== */
-  .page-wrap { position:relative; display:block; line-height:0; }
-  .price-badge { position:absolute; z-index:20; cursor:pointer; font-family:'Quicksand',sans-serif; transform:scale(0.67); transform-origin:top left; }
-  .price-tag { background:rgba(27,58,92,0.92); border-radius:8px; padding:4px 8px; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:transform 0.15s ease; white-space:nowrap; }
-  .price-tag:hover { transform:scale(1.05); }
-  .price-ref { font-size:0.55rem; font-weight:700; color:rgba(255,255,255,0.55); letter-spacing:0.3px; line-height:1; margin-bottom:1px; }
-  .price-main { font-size:0.9rem; font-weight:800; color:#fff; line-height:1.1; }
-  .price-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:200; align-items:center; justify-content:center; }
-  .price-modal-overlay.open { display:flex; }
-  .price-modal { background:#fff; border-radius:18px; padding:22px 24px 20px; width:340px; max-width:92vw; box-shadow:0 20px 60px rgba(0,0,0,0.3); font-family:'Quicksand',sans-serif; position:relative; }
-  .pm-close { position:absolute; top:12px; right:14px; background:none; border:none; font-size:1.3rem; cursor:pointer; color:#888; }
-  .pm-ref { font-size:0.65rem; font-weight:700; color:#999; margin-bottom:2px; }
-  .pm-nome { font-size:0.85rem; font-weight:800; color:#1B3A5C; line-height:1.3; margin-bottom:14px; }
-  .pm-prices { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
-  .pm-price-box { background:#f3f6fb; border-radius:10px; padding:8px 10px; }
-  .pm-price-label { font-size:0.58rem; font-weight:700; color:#888; text-transform:uppercase; }
-  .pm-price-val { font-size:1.05rem; font-weight:800; color:#1B3A5C; }
-  .pm-info { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
-  .pm-info-item { background:#f3f6fb; border-radius:8px; padding:5px 10px; font-size:0.7rem; font-weight:700; color:#1B3A5C; }
-  .pm-info-item span { font-weight:500; color:#666; }
-  .pm-ean { font-size:0.62rem; color:#aaa; margin-top:6px; line-height:1.6; }
-  .pm-launch { background:#fff3d8; border:1.5px solid #f89e1c; border-radius:8px; padding:6px 10px; margin-top:10px; font-size:0.72rem; font-weight:700; color:#8a5a0e; }
-  .pm-stock-ok { color:#3a7520; } .pm-stock-zero { color:#c0392b; }
-
-  /* ===== ICMS SELECTOR ===== */
-  .sb-icms { padding:10px 10px 12px; border-bottom:1px solid rgba(0,0,0,0.07); flex-shrink:0; }
-  .sb-icms-title { font-size:0.6rem; font-weight:700; color:rgba(27,58,92,0.5); letter-spacing:0.6px; text-transform:uppercase; margin-bottom:7px; display:flex; align-items:center; gap:5px; }
-  .sb-icms-title::before { content:''; display:inline-block; width:4px; height:12px; background:#1B3A5C; border-radius:3px; opacity:0.4; flex-shrink:0; }
-  .sb-icms-btns { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
-  .sb-icms-btn { font-family:'Quicksand',sans-serif; font-size:0.62rem; font-weight:700; padding:5px 4px; border-radius:8px; border:1.5px solid rgba(27,58,92,0.15); background:rgba(255,255,255,0.6); color:rgba(27,58,92,0.55); cursor:pointer; transition:all 0.18s ease; text-align:center; line-height:1.2; }
-  .sb-icms-btn:hover { background:rgba(27,58,92,0.08); color:#1B3A5C; border-color:rgba(27,58,92,0.3); }
-  .sb-icms-btn.active { background:#1B3A5C; color:#fff; border-color:#1B3A5C; }
-
 </style>
 </head>
 <body>
@@ -255,16 +221,6 @@
       <button class="sb-lang-btn" data-lang="pt" onclick="setLang('pt')"><span class="flag">🇧🇷</span> PT</button>
       <button class="sb-lang-btn" data-lang="en" onclick="setLang('en')"><span class="flag">🇺🇸</span> EN</button>
       <button class="sb-lang-btn" data-lang="es" onclick="setLang('es')"><span class="flag">🇦🇷</span> ES</button>
-    </div>
-    <!-- ICMS selector -->
-    <div class="sb-icms">
-      <div class="sb-icms-title">Tabela de Preços</div>
-      <div class="sb-icms-btns">
-        <button class="sb-icms-btn active" data-icms="p18"   onclick="setIcms('p18',this)">ICMS 18%</button>
-        <button class="sb-icms-btn"        data-icms="p12rs" onclick="setIcms('p12rs',this)">12% RS</button>
-        <button class="sb-icms-btn"        data-icms="p12"   onclick="setIcms('p12',this)">12% SC/PR/SP</button>
-        <button class="sb-icms-btn"        data-icms="p7"    onclick="setIcms('p7',this)">ICMS 7%</button>
-      </div>
     </div>
 
     <a href="sumario.html" class="sb-back">
@@ -905,125 +861,6 @@
   })();
 
   setLang(currentLang);
-  applyIcmsOnLoad();
-
-
-  let currentIcms = localStorage.getItem('xalingo-icms') || 'p18';
-  function setIcms(key, btn) {
-    currentIcms = key;
-    localStorage.setItem('xalingo-icms', key);
-    document.querySelectorAll('.sb-icms-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-icms') === key));
-    document.querySelectorAll('.price-badge').forEach(badge => {
-      const ref = badge.dataset.ref;
-      const d = PRICE_CONFIG[ref];
-      if (!d) return;
-      const fmtPrice = v => v > 0 ? 'R$ ' + v.toFixed(2).replace('.',',') : 'Consulte';
-      badge.querySelector('.price-tag').innerHTML = `<div class="price-ref">${ref}</div><div class="price-main">${fmtPrice(d[key])}</div>`;
-    });
-  }
-  function applyIcmsOnLoad() {
-    document.querySelectorAll('.sb-icms-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-icms') === currentIcms));
-  }
-
-    const PRICE_CONFIG = {
-    // ─── jogos-p0003 (pág 115) ───
-    '12809': { img:'jogos-p0003', x:4, y:15, p18:115.0, p12rs:131.0, p12:115.0, p7:115.0, cx:4, estoque:780, disponivel:0, nome:'XADREZ BRINCANDO DE ENGENHEIRO', ean:'7896640415853', dun:'17896640415850' },
-    // ─── jogos-p0004 (pág 116) ───
-    '60009': { img:'jogos-p0004', x:4, y:15, p18:110.0, p12rs:126.0, p12:126.0, p7:110.0, cx:4, estoque:0, disponivel:524, nome:'XADREZ OFICIAL', ean:'7896640460006', dun:'17896640460003' },
-    '60065': { img:'jogos-p0004', x:4, y:60, p18:179.0, p12rs:205.0, p12:205.0, p7:179.0, cx:4, estoque:0, disponivel:0, nome:'XADREZ E DAMAS', ean:'7896640460068', dun:'17896640460065' },
-    // ─── jogos-p0005 (pág 117) ───
-    '7821': { img:'jogos-p0005', x:4, y:20, p18:32.2, p12rs:31.4, p12:31.4, p7:28.5, cx:6, estoque:0, disponivel:534, nome:'XADREZ ESCOLAR PLÁSTICO', ean:'7896640407827', dun:'17896640407824' },
-    '60087': { img:'jogos-p0005', x:4, y:50, p18:31.3, p12rs:35.7, p12:35.7, p7:31.3, cx:6, estoque:0, disponivel:589, nome:'XADREZ ESCOLAR JOGOS TRADICIONAIS EM MADEIRA', ean:'7896640440008', dun:'17896640440005' },
-    '60010': { img:'jogos-p0005', x:4, y:80, p18:40.6, p12rs:46.4, p12:46.4, p7:40.6, cx:6, estoque:1797, disponivel:2982, nome:'XADREZ ESCOLAR', ean:'7896640460013', dun:'17896640460010' },
-    // ─── jogos-p0007 (pág 119) ───
-    '7098': { img:'jogos-p0007', x:4, y:15, p18:10.9, p12rs:12.5, p12:12.5, p7:10.9, cx:24, estoque:0, disponivel:2387, nome:'PEGA VARETAS', ean:'7896640407094', dun:'17896640407091' },
-    '20498': { img:'jogos-p0007', x:4, y:60, p18:26.2, p12rs:24.9, p12:24.9, p7:23.8, cx:0, estoque:0, disponivel:0, nome:'ADIVINHA PRIMEIRO!', ean:'7896640426859', dun:'17896640426856', lancamento:'01/04/2026' },
-    // ─── jogos-p0008 (pág 120) ───
-    '54709': { img:'jogos-p0008', x:4, y:15, p18:60.0, p12rs:58.5, p12:58.5, p7:53.1, cx:6, estoque:0, disponivel:0, nome:'LUDO TRIDIMENSIONAL', ean:'7896640490324', dun:'17896640490321' },
-    '65598': { img:'jogos-p0008', x:4, y:60, p18:77.7, p12rs:88.7, p12:88.7, p7:77.7, cx:3, estoque:476, disponivel:976, nome:'JOGO 5 X 1', ean:'7896640465599', dun:'17896640465596' },
-    // ─── jogos-p0009 (pág 121) ───
-    '65587': { img:'jogos-p0009', x:4, y:15, p18:31.8, p12rs:36.3, p12:36.3, p7:31.8, cx:6, estoque:773, disponivel:773, nome:'18 JOGOS', ean:'7896640465582', dun:'17896640465589' },
-    '65576': { img:'jogos-p0009', x:4, y:60, p18:54.1, p12rs:61.7, p12:61.7, p7:54.1, cx:3, estoque:304, disponivel:304, nome:'JOGO 4 X 1', ean:'7896640465575', dun:'17896640465572' },
-    // ─── jogos-p0010 (pág 122) ───
-    '60210': { img:'jogos-p0010', x:4, y:15, p18:44.9, p12rs:51.2, p12:51.2, p7:44.9, cx:6, estoque:0, disponivel:419, nome:'DAMAS E LUDO', ean:'7896640460211', dun:'17896640460218' },
-    '60198': { img:'jogos-p0010', x:4, y:60, p18:46.7, p12rs:53.3, p12:53.3, p7:46.7, cx:6, estoque:7, disponivel:1007, nome:'DAMAS E TRILHA', ean:'7896640460198', dun:'17896640460195' },
-    // ─── jogos-p0011 (pág 123) ───
-    '65554': { img:'jogos-p0011', x:4, y:15, p18:14.6, p12rs:16.7, p12:16.7, p7:14.6, cx:12, estoque:54, disponivel:54, nome:'DAMAS', ean:'7896640470388', dun:'17896640470385' },
-    '65543': { img:'jogos-p0011', x:4, y:60, p18:15.3, p12rs:17.4, p12:17.4, p7:15.3, cx:12, estoque:2622, disponivel:2622, nome:'LUDO', ean:'7896640470395', dun:'17896640470392' },
-    // ─── jogos-p0012 (pág 124) ───
-    '52909': { img:'jogos-p0012', x:4, y:20, p18:40.0, p12rs:45.7, p12:45.7, p7:40.0, cx:6, estoque:0, disponivel:216, nome:'BINGO EM MADEIRA', ean:'7896640452902', dun:'17896640452909' },
-    '52943': { img:'jogos-p0012', x:4, y:50, p18:43.2, p12rs:49.4, p12:49.4, p7:43.2, cx:6, estoque:51, disponivel:51, nome:'LOTO - 48 CARTELAS', ean:'7896640452940', dun:'17896640452947' },
-    '68510': { img:'jogos-p0012', x:4, y:80, p18:50.7, p12rs:57.9, p12:50.7, p7:50.7, cx:4, estoque:5134, disponivel:5134, nome:'BINGO SHOW -  24 CARTELAS', ean:'7896640411336', dun:'17896640411333' },
-    // ─── jogos-p0013 (pág 125) ───
-    '7043': { img:'jogos-p0013', x:4, y:15, p18:11.1, p12rs:10.8, p12:10.8, p7:9.8, cx:12, estoque:4433, disponivel:4433, nome:'RESTA UM', ean:'7896640407049', dun:'17896640407046' },
-    '16687': { img:'jogos-p0013', x:4, y:60, p18:175.0, p12rs:200.0, p12:175.0, p7:175.0, cx:6, estoque:0, disponivel:0, nome:'BASQUETE DE MESA', ean:'7896640412579', dun:'17896640412576' },
-    // ─── jogos-p0014 (pág 126) ───
-    '60598': { img:'jogos-p0014', x:4, y:15, p18:73.3, p12rs:71.5, p12:71.5, p7:65.0, cx:6, estoque:0, disponivel:0, nome:'JOGO DE TABULEIRO CORRE PIRATA', ean:'7896640499297', dun:'17896640499294' },
-    '60576': { img:'jogos-p0014', x:4, y:60, p18:90.4, p12rs:88.1, p12:88.1, p7:80.0, cx:6, estoque:949, disponivel:949, nome:'JOGO DE TABULEIRO PANGEIA', ean:'7896640499273', dun:'17896640499270' },
-    // ─── jogos-p0015 (pág 127) ───
-    '12732': { img:'jogos-p0015', x:4, y:15, p18:85.3, p12rs:83.2, p12:83.2, p7:75.5, cx:6, estoque:707, disponivel:707, nome:'JOGO DE TABULEIRO CAMPOS DA FORTUNA', ean:'7896640489533', dun:'17896640489530' },
-    '12810': { img:'jogos-p0015', x:4, y:60, p18:98.4, p12rs:96.0, p12:96.0, p7:87.2, cx:6, estoque:169, disponivel:169, nome:'JOGO DE TABULEIRO PISANDO FUNDO', ean:'7896640489601', dun:'17896640489608' },
-  };
-
-  function renderPriceBadges() {
-    Object.entries(PRICE_CONFIG).forEach(([ref, d]) => {
-      const img = document.querySelector(`img[src*="${d.img}"]`);
-      if (!img) return;
-      let wrap = img.parentElement;
-      if (!wrap.classList.contains('page-wrap')) {
-        const newWrap = document.createElement('div');
-        newWrap.className = 'page-wrap';
-        img.parentNode.insertBefore(newWrap, img);
-        newWrap.appendChild(img);
-        wrap = newWrap;
-      }
-      const badge = document.createElement('div');
-      badge.className = 'price-badge';
-      badge.style.left = d.x + '%';
-      badge.style.top  = d.y + '%';
-      badge.dataset.ref = ref;
-      const fmtPrice = v => v > 0 ? 'R$ ' + v.toFixed(2).replace('.',',') : 'Consulte';
-      badge.innerHTML = `<div class="price-tag"><div class="price-ref">${ref}</div><div class="price-main">${fmtPrice(d[currentIcms])}</div></div>`;
-      badge.addEventListener('click', () => openPriceModal(ref, d));
-      wrap.appendChild(badge);
-    });
-  }
-
-  function openPriceModal(ref, d) {
-    const fmtPrice = v => v > 0 ? 'R$ ' + v.toFixed(2).replace('.',',') : 'Consulte';
-    const stockClass = d.estoque > 0 ? 'pm-stock-ok' : 'pm-stock-zero';
-    const stockLabel = d.estoque > 0 ? d.estoque + ' un.' : 'Sem estoque';
-    const dispClass  = d.disponivel > 0 ? 'pm-stock-ok' : 'pm-stock-zero';
-    const launch = d.lancamento ? `<div class="pm-launch">🚀 Previsão: ${d.lancamento}</div>` : '';
-    document.getElementById('pmContent').innerHTML = `
-      <div class="pm-ref">REF ${ref}</div>
-      <div class="pm-nome">${d.nome}</div>
-      <div class="pm-prices">
-        <div class="pm-price-box"><div class="pm-price-label">ICMS 18%</div><div class="pm-price-val">${fmtPrice(d.p18)}</div></div>
-        <div class="pm-price-box"><div class="pm-price-label">ICMS 12% RS</div><div class="pm-price-val">${fmtPrice(d.p12rs)}</div></div>
-        <div class="pm-price-box"><div class="pm-price-label">ICMS 12% SC/PR/SP/RJ/MG</div><div class="pm-price-val">${fmtPrice(d.p12)}</div></div>
-        <div class="pm-price-box"><div class="pm-price-label">ICMS 7%</div><div class="pm-price-val">${fmtPrice(d.p7)}</div></div>
-      </div>
-      <div class="pm-info">
-        <div class="pm-info-item">CX: <span>${d.cx} un.</span></div>
-        <div class="pm-info-item">Estoque: <span class="${stockClass}">${stockLabel}</span></div>
-        <div class="pm-info-item">Disponível mar: <span class="${dispClass}">${d.disponivel} un.</span></div>
-      </div>
-      <div class="pm-ean">EAN: ${d.ean}<br>DUN: ${d.dun}</div>
-      ${launch}`;
-    document.getElementById('priceModal').classList.add('open');
-  }
-
-  document.addEventListener('DOMContentLoaded', renderPriceBadges);
 </script>
-
-<!-- Price modal -->
-<div class="price-modal-overlay" id="priceModal" onclick="if(event.target===this)this.classList.remove('open')">
-  <div class="price-modal">
-    <button class="pm-close" onclick="document.getElementById('priceModal').classList.remove('open')">✕</button>
-    <div id="pmContent"></div>
-  </div>
-</div>
-
 </body>
 </html>

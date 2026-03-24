@@ -488,40 +488,6 @@
   @keyframes flash-result { 0%{opacity:.4} 100%{opacity:1} }
   .sb-result-item.highlight-flash { animation: flash-result 0.5s ease; }
 
-
-  /* ===== PRICE OVERLAYS ===== */
-  .page-wrap { position:relative; display:block; line-height:0; }
-  .price-badge { position:absolute; z-index:20; cursor:pointer; font-family:'Quicksand',sans-serif; transform:scale(0.67); transform-origin:top left; }
-  .price-tag { background:rgba(27,58,92,0.92); border-radius:8px; padding:4px 8px; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:transform 0.15s ease; white-space:nowrap; }
-  .price-tag:hover { transform:scale(1.05); }
-  .price-ref { font-size:0.55rem; font-weight:700; color:rgba(255,255,255,0.55); letter-spacing:0.3px; line-height:1; margin-bottom:1px; }
-  .price-main { font-size:0.9rem; font-weight:800; color:#fff; line-height:1.1; }
-  .price-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:200; align-items:center; justify-content:center; }
-  .price-modal-overlay.open { display:flex; }
-  .price-modal { background:#fff; border-radius:18px; padding:22px 24px 20px; width:340px; max-width:92vw; box-shadow:0 20px 60px rgba(0,0,0,0.3); font-family:'Quicksand',sans-serif; position:relative; }
-  .pm-close { position:absolute; top:12px; right:14px; background:none; border:none; font-size:1.3rem; cursor:pointer; color:#888; }
-  .pm-ref { font-size:0.65rem; font-weight:700; color:#999; margin-bottom:2px; }
-  .pm-nome { font-size:0.85rem; font-weight:800; color:#1B3A5C; line-height:1.3; margin-bottom:14px; }
-  .pm-prices { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
-  .pm-price-box { background:#f3f6fb; border-radius:10px; padding:8px 10px; }
-  .pm-price-label { font-size:0.58rem; font-weight:700; color:#888; text-transform:uppercase; }
-  .pm-price-val { font-size:1.05rem; font-weight:800; color:#1B3A5C; }
-  .pm-info { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
-  .pm-info-item { background:#f3f6fb; border-radius:8px; padding:5px 10px; font-size:0.7rem; font-weight:700; color:#1B3A5C; }
-  .pm-info-item span { font-weight:500; color:#666; }
-  .pm-ean { font-size:0.62rem; color:#aaa; margin-top:6px; line-height:1.6; }
-  .pm-launch { background:#fff3d8; border:1.5px solid #f89e1c; border-radius:8px; padding:6px 10px; margin-top:10px; font-size:0.72rem; font-weight:700; color:#8a5a0e; }
-  .pm-stock-ok { color:#3a7520; } .pm-stock-zero { color:#c0392b; }
-
-  /* ===== ICMS SELECTOR ===== */
-  .sb-icms { padding:10px 10px 12px; border-bottom:1px solid rgba(0,0,0,0.07); flex-shrink:0; }
-  .sb-icms-title { font-size:0.6rem; font-weight:700; color:rgba(27,58,92,0.5); letter-spacing:0.6px; text-transform:uppercase; margin-bottom:7px; display:flex; align-items:center; gap:5px; }
-  .sb-icms-title::before { content:''; display:inline-block; width:4px; height:12px; background:#1B3A5C; border-radius:3px; opacity:0.4; flex-shrink:0; }
-  .sb-icms-btns { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
-  .sb-icms-btn { font-family:'Quicksand',sans-serif; font-size:0.62rem; font-weight:700; padding:5px 4px; border-radius:8px; border:1.5px solid rgba(27,58,92,0.15); background:rgba(255,255,255,0.6); color:rgba(27,58,92,0.55); cursor:pointer; transition:all 0.18s ease; text-align:center; line-height:1.2; }
-  .sb-icms-btn:hover { background:rgba(27,58,92,0.08); color:#1B3A5C; border-color:rgba(27,58,92,0.3); }
-  .sb-icms-btn.active { background:#1B3A5C; color:#fff; border-color:#1B3A5C; }
-
 </style>
 </head>
 <body>
@@ -543,16 +509,6 @@
       <button class="sb-lang-btn" data-lang="pt" onclick="setLang('pt')"><span class="flag">🇧🇷</span> PT</button>
       <button class="sb-lang-btn" data-lang="en" onclick="setLang('en')"><span class="flag">🇺🇸</span> EN</button>
       <button class="sb-lang-btn" data-lang="es" onclick="setLang('es')"><span class="flag">🇦🇷</span> ES</button>
-    </div>
-    <!-- ICMS selector -->
-    <div class="sb-icms">
-      <div class="sb-icms-title">Tabela de Preços</div>
-      <div class="sb-icms-btns">
-        <button class="sb-icms-btn active" data-icms="p18"   onclick="setIcms('p18',this)">ICMS 18%</button>
-        <button class="sb-icms-btn"        data-icms="p12rs" onclick="setIcms('p12rs',this)">12% RS</button>
-        <button class="sb-icms-btn"        data-icms="p12"   onclick="setIcms('p12',this)">12% SC/PR/SP</button>
-        <button class="sb-icms-btn"        data-icms="p7"    onclick="setIcms('p7',this)">ICMS 7%</button>
-      </div>
     </div>
 
     <a href="sumario.html" class="sb-back">
@@ -1233,101 +1189,7 @@
   })();
 
   setLang(currentLang);
-  applyIcmsOnLoad();
-
-
-  let currentIcms = localStorage.getItem('xalingo-icms') || 'p18';
-  function setIcms(key, btn) {
-    currentIcms = key;
-    localStorage.setItem('xalingo-icms', key);
-    document.querySelectorAll('.sb-icms-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-icms') === key));
-    document.querySelectorAll('.price-badge').forEach(badge => {
-      const ref = badge.dataset.ref;
-      const d = PRICE_CONFIG[ref];
-      if (!d) return;
-      const fmtPrice = v => v > 0 ? 'R$ ' + v.toFixed(2).replace('.',',') : 'Consulte';
-      badge.querySelector('.price-tag').innerHTML = `<div class="price-ref">${ref}</div><div class="price-main">${fmtPrice(d[key])}</div>`;
-    });
-  }
-  function applyIcmsOnLoad() {
-    document.querySelectorAll('.sb-icms-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-icms') === currentIcms));
-  }
-
-    const PRICE_CONFIG = {
-    // ─── esportes-p2 (pág 144) ───
-    '20432': { img:'esportes-p2', x:4, y:15, p18:109.0, p12rs:103.0, p12:103.0, p7:98.4, cx:0, estoque:0, disponivel:0, nome:'TABELA DE BASQUETE PLAY', ean:'7896640426682', dun:'17896640426689', lancamento:'01/04/2026' },
-    // ─── esportes-p3 (pág 145) ───
-    '28665': { img:'esportes-p3', x:4, y:15, p18:58.5, p12rs:66.8, p12:58.5, p7:58.5, cx:6, estoque:1316, disponivel:1316, nome:'BOLA DE BASQUETE OFICIAL N 7 - COLORIDA', ean:'7896640491390', dun:'17896640491397' },
-    '67032': { img:'esportes-p3', x:4, y:60, p18:115.0, p12rs:112.0, p12:112.0, p7:102.0, cx:1, estoque:669, disponivel:2169, nome:'TABELA DE BASQUETE', ean:'7896640467036', dun:'17896640467033' },
-    // ─── esportes-p4 (pág 146) ───
-    '7209': { img:'esportes-p4', x:4, y:20, p18:35.6, p12rs:34.8, p12:34.8, p7:31.6, cx:6, estoque:43, disponivel:43, nome:'JOGO DE BOTÕES BRASILEIRÃO', ean:'7896640407209', dun:'17896640407206' },
-    '67109': { img:'esportes-p4', x:4, y:50, p18:50.7, p12rs:49.5, p12:49.5, p7:44.9, cx:6, estoque:182, disponivel:1182, nome:'MESA PARA JOGO DE BOTÃO COM MARCADOR', ean:'7896640467104', dun:'17896640467101' },
-    '67354': { img:'esportes-p4', x:4, y:80, p18:440.0, p12rs:429.0, p12:429.0, p7:390.0, cx:1, estoque:0, disponivel:774, nome:'PEBOLIM SUPER COPA', ean:'7896640433901', dun:'17896640433908' },
-    // ─── esportes-p5 (pág 147) ───
-    '54509': { img:'esportes-p5', x:4, y:15, p18:58.1, p12rs:66.4, p12:66.4, p7:58.1, cx:6, estoque:498, disponivel:498, nome:'CONJUNTO TÊNIS DE MESA', ean:'7896640454500', dun:'17896640454507' },
-    '67287': { img:'esportes-p5', x:4, y:60, p18:1580.0, p12rs:1544.0, p12:1544.0, p7:1400.0, cx:1, estoque:0, disponivel:12, nome:'MESA DOBRÁVEL DE MADEIRA COM PÉS', ean:'7896640467289', dun:'17896640467286' },
-  };
-
-  function renderPriceBadges() {
-    Object.entries(PRICE_CONFIG).forEach(([ref, d]) => {
-      const img = document.querySelector(`img[src*="${d.img}"]`);
-      if (!img) return;
-      let wrap = img.parentElement;
-      if (!wrap.classList.contains('page-wrap')) {
-        const newWrap = document.createElement('div');
-        newWrap.className = 'page-wrap';
-        img.parentNode.insertBefore(newWrap, img);
-        newWrap.appendChild(img);
-        wrap = newWrap;
-      }
-      const badge = document.createElement('div');
-      badge.className = 'price-badge';
-      badge.style.left = d.x + '%';
-      badge.style.top  = d.y + '%';
-      badge.dataset.ref = ref;
-      const fmtPrice = v => v > 0 ? 'R$ ' + v.toFixed(2).replace('.',',') : 'Consulte';
-      badge.innerHTML = `<div class="price-tag"><div class="price-ref">${ref}</div><div class="price-main">${fmtPrice(d[currentIcms])}</div></div>`;
-      badge.addEventListener('click', () => openPriceModal(ref, d));
-      wrap.appendChild(badge);
-    });
-  }
-
-  function openPriceModal(ref, d) {
-    const fmtPrice = v => v > 0 ? 'R$ ' + v.toFixed(2).replace('.',',') : 'Consulte';
-    const stockClass = d.estoque > 0 ? 'pm-stock-ok' : 'pm-stock-zero';
-    const stockLabel = d.estoque > 0 ? d.estoque + ' un.' : 'Sem estoque';
-    const dispClass  = d.disponivel > 0 ? 'pm-stock-ok' : 'pm-stock-zero';
-    const launch = d.lancamento ? `<div class="pm-launch">🚀 Previsão: ${d.lancamento}</div>` : '';
-    document.getElementById('pmContent').innerHTML = `
-      <div class="pm-ref">REF ${ref}</div>
-      <div class="pm-nome">${d.nome}</div>
-      <div class="pm-prices">
-        <div class="pm-price-box"><div class="pm-price-label">ICMS 18%</div><div class="pm-price-val">${fmtPrice(d.p18)}</div></div>
-        <div class="pm-price-box"><div class="pm-price-label">ICMS 12% RS</div><div class="pm-price-val">${fmtPrice(d.p12rs)}</div></div>
-        <div class="pm-price-box"><div class="pm-price-label">ICMS 12% SC/PR/SP/RJ/MG</div><div class="pm-price-val">${fmtPrice(d.p12)}</div></div>
-        <div class="pm-price-box"><div class="pm-price-label">ICMS 7%</div><div class="pm-price-val">${fmtPrice(d.p7)}</div></div>
-      </div>
-      <div class="pm-info">
-        <div class="pm-info-item">CX: <span>${d.cx} un.</span></div>
-        <div class="pm-info-item">Estoque: <span class="${stockClass}">${stockLabel}</span></div>
-        <div class="pm-info-item">Disponível mar: <span class="${dispClass}">${d.disponivel} un.</span></div>
-      </div>
-      <div class="pm-ean">EAN: ${d.ean}<br>DUN: ${d.dun}</div>
-      ${launch}`;
-    document.getElementById('priceModal').classList.add('open');
-  }
-
-  document.addEventListener('DOMContentLoaded', renderPriceBadges);
 </script>
-
-
-<!-- Price modal -->
-<div class="price-modal-overlay" id="priceModal" onclick="if(event.target===this)this.classList.remove('open')">
-  <div class="price-modal">
-    <button class="pm-close" onclick="document.getElementById('priceModal').classList.remove('open')">✕</button>
-    <div id="pmContent"></div>
-  </div>
-</div>
 
 </body>
 </html>
