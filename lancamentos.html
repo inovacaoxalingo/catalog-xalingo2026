@@ -60,39 +60,39 @@
 
   /* ── LIGHT MODE ── */
   body.light{
-    --th-body-bg:#e8e0d0;
-    --th-main-bg:#e8e0d0;
-    --th-hero-bg:linear-gradient(135deg,#f5e5d6 0%,#ede0ce 100%);
-    --th-hero-border:rgba(0,0,0,.06);
+    --th-body-bg:#ddd5c5;
+    --th-main-bg:#ddd5c5;
+    --th-hero-bg:linear-gradient(135deg,#f0dfd0 0%,#e8d8c6 100%);
+    --th-hero-border:rgba(0,0,0,.08);
     --th-hero-title:#1B3A5C;
-    --th-hero-sub:rgba(27,58,92,.5);
-    --th-stat-label:rgba(27,58,92,.4);
-    --th-teaser-bg:rgba(27,58,92,.06);
-    --th-teaser-border:rgba(27,58,92,.15);
-    --th-teaser-color:rgba(27,58,92,.5);
-    --th-filter-bg:#f0e6d8;
-    --th-filter-border:rgba(0,0,0,.07);
-    --th-filter-color:rgba(27,58,92,.4);
-    --th-filter-hover:rgba(27,58,92,.8);
-    --th-section-title:rgba(27,58,92,.35);
-    --th-section-line:rgba(0,0,0,.08);
-    --th-card-bg:#fff;
-    --th-card-border:rgba(0,0,0,.07);
-    --th-card-img-bg:linear-gradient(135deg,#f8f4ef,#ede8e2);
-    --th-card-ref:rgba(27,58,92,.4);
+    --th-hero-sub:rgba(27,58,92,.65);
+    --th-stat-label:rgba(27,58,92,.6);
+    --th-teaser-bg:rgba(27,58,92,.09);
+    --th-teaser-border:rgba(27,58,92,.25);
+    --th-teaser-color:rgba(27,58,92,.72);
+    --th-filter-bg:#e8ddd0;
+    --th-filter-border:rgba(0,0,0,.1);
+    --th-filter-color:rgba(27,58,92,.6);
+    --th-filter-hover:#1B3A5C;
+    --th-section-title:rgba(27,58,92,.6);
+    --th-section-line:rgba(27,58,92,.15);
+    --th-card-bg:#faf6f1;
+    --th-card-border:rgba(0,0,0,.1);
+    --th-card-img-bg:linear-gradient(135deg,#ede8e2,#e4ddd6);
+    --th-card-ref:rgba(27,58,92,.55);
     --th-card-name:#1B3A5C;
-    --th-hero-ref:rgba(27,58,92,.35);
+    --th-hero-ref:rgba(27,58,92,.5);
     --th-hero-name:#1B3A5C;
-    --th-modal-bg:#fff;
-    --th-modal-border:rgba(0,0,0,.09);
-    --th-modal-line:rgba(0,0,0,.07);
-    --th-modal-ref:rgba(27,58,92,.4);
+    --th-modal-bg:#faf6f1;
+    --th-modal-border:rgba(0,0,0,.1);
+    --th-modal-line:rgba(0,0,0,.09);
+    --th-modal-ref:rgba(27,58,92,.5);
     --th-modal-name:#1B3A5C;
-    --th-modal-desc:rgba(27,58,92,.65);
-    --th-modal-img-bg:linear-gradient(135deg,#f5f0ea,#ede8e0);
-    --th-modal-await-color:rgba(27,58,92,.25);
-    --th-scroll-thumb:rgba(0,0,0,.15);
-    --th-barcode-label:rgba(0,0,0,.3);
+    --th-modal-desc:rgba(27,58,92,.72);
+    --th-modal-img-bg:linear-gradient(135deg,#ede8e2,#e4ddd6);
+    --th-modal-await-color:rgba(27,58,92,.3);
+    --th-scroll-thumb:rgba(0,0,0,.18);
+    --th-barcode-label:rgba(0,0,0,.4);
   }
 
   /* Theme toggle button */
@@ -181,7 +181,7 @@
   .hero-title span{color:var(--gold);}
   .hero-sub{font-size:.95rem;color:var(--th-hero-sub);max-width:440px;line-height:1.6;transition:color .35s;}
   .hero-stats{display:flex;gap:28px;margin-top:28px;align-items:flex-end;flex-wrap:wrap;}
-  .hero-teaser{display:inline-flex;align-items:center;gap:8px;background:var(--th-teaser-bg);border:1px solid var(--th-teaser-border);border-radius:10px;padding:8px 14px;font-size:.72rem;font-weight:600;color:var(--th-teaser-color);line-height:1.4;max-width:260px;margin-bottom:4px;transition:all .35s;}
+  .hero-teaser{display:inline-flex;align-items:center;gap:8px;background:var(--th-teaser-bg);border:1.5px solid var(--th-teaser-border);border-radius:12px;padding:10px 18px;font-size:.82rem;font-weight:700;color:var(--th-teaser-color);line-height:1.2;white-space:nowrap;margin-bottom:4px;transition:all .35s;}
   .stat-num{font-family:'Fredoka',sans-serif;font-size:1.8rem;font-weight:700;color:var(--gold);line-height:1;}
   .stat-label{font-size:.65rem;color:var(--th-stat-label);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;transition:color .35s;}
   .hero-rocket{position:absolute;right:0;top:0;bottom:0;width:46%;pointer-events:none;overflow:hidden;display:flex;align-items:center;justify-content:center;}
@@ -214,8 +214,45 @@
     60% {opacity:.09;}
     100%{opacity:0;transform:scale(2.2) translateY(18px);}
   }
-  body.light .hero-star{background:rgba(27,58,92,.25);}
-  body.light .puff{background:rgba(27,58,92,.12) !important;}
+  body.light .hero-star{background:rgba(27,58,92,.2);}
+  body.light .puff{background:rgba(27,58,92,.1) !important;}
+  body.light .rocket-emoji{opacity:.18;}
+
+  /* Light mode card shadows for depth */
+  body.light .card{box-shadow:0 2px 12px rgba(0,0,0,.08);}
+  body.light .card:hover{box-shadow:0 16px 44px rgba(0,0,0,.15),0 0 0 1px rgba(240,160,48,.35);}
+  body.light .card-feat{box-shadow:0 2px 12px rgba(0,0,0,.08);}
+  body.light .card-feat:hover{box-shadow:0 20px 50px rgba(0,0,0,.14),0 0 0 1px rgba(240,160,48,.35);}
+  body.light .card-hero{box-shadow:0 4px 20px rgba(0,0,0,.1);}
+  body.light .card-hero:hover{box-shadow:0 24px 64px rgba(0,0,0,.16),0 0 0 1px rgba(240,160,48,.5);}
+
+  /* Light mode badges */
+  body.light .badge-new{background:var(--gold);color:#fff;box-shadow:0 2px 8px rgba(240,160,48,.4);}
+  body.light .badge-soon{background:rgba(27,58,92,.12);border-color:rgba(27,58,92,.2);color:rgba(27,58,92,.65);}
+
+  /* Light mode category pills - solid, readable */
+  body.light .cat-blocos{background:rgba(41,59,127,.15);color:#1e2a5a;}
+  body.light .cat-educativos{background:rgba(77,53,154,.15);color:#3a2470;}
+  body.light .cat-jogos{background:rgba(239,49,40,.15);color:#8b1a15;}
+  body.light .cat-esportes{background:rgba(248,158,28,.2);color:#7a4e0a;}
+  body.light .cat-playground{background:rgba(137,20,52,.15);color:#5e0e24;}
+
+  /* Light mode filter bar separation */
+  body.light .filter-bar{box-shadow:0 2px 8px rgba(0,0,0,.07);}
+  body.light .filter-btn{color:rgba(27,58,92,.6);}
+
+  /* Light mode section title stronger */
+  body.light .section-title{letter-spacing:1.5px;}
+
+  /* Light mode hero card body bg */
+  body.light .card-hero-body{background:#faf6f1;}
+  body.light .card-hero-ref{font-weight:700;}
+
+  /* Light mode modal age pill stays readable */
+  body.light .modal-age{color:#7a4a00;}
+
+  /* Light mode stat numbers */
+  body.light .stat-num{text-shadow:none;}
 
   /* ── FILTER BAR ── */
   .filter-bar{padding:0 48px;background:var(--th-filter-bg);border-bottom:1px solid var(--th-filter-border);display:flex;align-items:center;gap:0;overflow-x:auto;position:sticky;top:0;z-index:20;transition:background .35s,border-color .35s;}
@@ -418,9 +455,9 @@
 const PRODUCTS = [
   // ── BLOCOS (23) ──
   {ref:"20509",nome:"BRINCANDO DE ENGENHEIRO - 20 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/03/20/2050-9-brincando-de-engenheiro-20-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2050.9-BRINCANDO-DE-ENGENHEIRO-20-PCS-POUCH_MOCKUP-918x1024.png",cat:"blocos",idade:"+3 anos",ean:"7896640426866"},
-  {ref:"20165",nome:"BRINCANDO DE ENGENHEIRO 70 ANOS",site:"",img:"",cat:"blocos",idade:"+3 anos",ean:"7896640425548"},
+  {ref:"20165",nome:"BRINCANDO DE ENGENHEIRO 70 ANOS",site:"",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2016.5-BRINCANDO-DE-ENGENHEIRO-70-ANOS-70-embalagem_.png",cat:"blocos",idade:"+3 anos",ean:"7896640425548"},
   {ref:"17921",nome:"BL CRIATIVOS - MONTANHA RUSSA - 56 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/02/19/bl-criativos-montanha-russa/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/17921-BL-CRIATIVOS-MONTANHA-RUSSA-56-PCS-1024x862.png",cat:"blocos",idade:"+6 anos",ean:"7896640419844"},
-  {ref:"17910",nome:"BL CRIATIVOS - ACESSORIOS PIRATA - 51 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/02/18/bl-criativos-acessorios-pirata/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/47b3322a-1fab-4242-a9b2-5eeaefb076dc-730x886.png",cat:"blocos",idade:"+6 anos",ean:"7896640419837"},
+  {ref:"17910",nome:"BL CRIATIVOS - ACESSORIOS PIRATA - 67 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/02/18/bl-criativos-acessorios-pirata/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/47b3322a-1fab-4242-a9b2-5eeaefb076dc-730x886.png",cat:"blocos",idade:"+6 anos",ean:"7896640419837"},
   {ref:"17943",nome:"BL CRIATIVOS - 800 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/02/19/bl-criativos-800-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/Ativo-1-1024x744.png",cat:"blocos",idade:"+6 anos",ean:"7896640419868"},
   {ref:"16910",nome:"BL RACING CAR - CARRO DE CORRIDA - DISPLAY 4 UN",site:"https://produtosxalingo.oneweb.com.br/2026/02/19/bl-racing-car-carro-de-corrida-display-4-un/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/02/1691.0-BL-RACING-CAR-CARRO-DE-CORRIDA-DISPLAY-4-UN-161-173-PCS-4-carros-juntos-72-dpi-1024x1024.png",cat:"blocos",idade:"+6 anos",ean:"7896640419677"},
   {ref:"16909",nome:"BL RACING CAR - MINI CARRO DE CORRIDA - DISPLAY 10 UN",site:"https://produtosxalingo.oneweb.com.br/2026/02/19/bl-racing-car-mini-carro-de-corrida-display-10-un/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/1690.9-BL-RACING-CAR-MINI-CARRO-DE-CORRIDA-DISPLAY-10-UN-62-69-PCS_1691.0-BL-RACING-CAR-CARRO-DE-CORRIDA-copia_1691.0-BL-RACING-CAR-CARRO-DE-CORRIDA-copia-1024x1024.png",cat:"blocos",idade:"+6 anos",ean:"7896640419660"},
