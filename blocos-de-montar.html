@@ -407,6 +407,11 @@
   .sb-news .sb-cat-num, .sb-news .sb-cat-name, .sb-news .sb-cat-arrow { color: #e6f1fb; }
   .sb-news .sb-sub { color: #1B3A5C; }
   .sb-news .sb-sub-dot { background: #378ADD; }
+  .sb-lancamentos .sb-cat-head { background: linear-gradient(135deg,#1B3A5C,#0d0f1a); border: 1.5px solid #f0a030; }
+  .sb-lancamentos .sb-cat-bar { background: #f0a030; }
+  .sb-lancamentos .sb-cat-num, .sb-lancamentos .sb-cat-name, .sb-lancamentos .sb-cat-arrow { color: #f0a030; }
+  .sb-lancamentos .sb-sub { color: #1B3A5C; }
+  .sb-lancamentos .sb-sub-dot { background: #f0a030; }
 
   /* ===== LANG SWITCHER SIDEBAR ===== */
   .sb-lang {
@@ -677,6 +682,17 @@
         <a class="sb-sub" href="news.html#avisos"><span class="sb-sub-dot"></span>Avisos</a>
         <a class="sb-sub" href="news.html#videos"><span class="sb-sub-dot"></span>Videos</a>
         <a class="sb-sub" href="news.html#redes"><span class="sb-sub-dot"></span>Redes Sociais</a>
+      </div>
+    </div>
+    <div class="sb-cat sb-lancamentos" onclick="toggleCat(this)">
+      <div class="sb-cat-head">
+        <div class="sb-cat-bar"></div>
+        <div class="sb-cat-num">🚀</div>
+        <div class="sb-cat-name">Lançamentos 2026</div>
+        <div class="sb-cat-arrow">&#9658;</div>
+      </div>
+      <div class="sb-subs">
+        <a class="sb-sub" href="lancamentos.html"><span class="sb-sub-dot"></span>Ver todos<span class="sb-sub-page">47</span></a>
       </div>
     </div>
 </nav>
