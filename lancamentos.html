@@ -96,6 +96,31 @@
   }
 
   /* Theme toggle button */
+  .pdf-btn{position:absolute;top:20px;right:170px;display:flex;align-items:center;gap:7px;background:rgba(240,160,48,.15);border:1.5px solid rgba(240,160,48,.35);border-radius:100px;padding:7px 14px;cursor:pointer;font-family:'Quicksand',sans-serif;font-size:.7rem;font-weight:700;color:var(--gold);transition:all .25s;z-index:5;}
+  .pdf-btn:hover{background:rgba(240,160,48,.28);border-color:rgba(240,160,48,.6);}
+  body.light .pdf-btn{background:rgba(240,160,48,.12);border-color:rgba(240,160,48,.4);color:#8a5a0e;}
+  body.light .pdf-btn:hover{background:rgba(240,160,48,.25);}
+  @media print{
+    .sidebar,.filter-bar,.hero,.sb-toggle,.sb-overlay,.modal,.theme-btn,.pdf-btn{display:none!important;}
+    .main{margin-left:0!important;}
+    body{background:#fff!important;color:#000!important;}
+    .content{padding:10px!important;}
+    .grid{grid-template-columns:repeat(4,1fr)!important;gap:10px!important;}
+    .destaques-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important;}
+    .card,.card-feat,.card-hero{break-inside:avoid;border:1px solid #ddd!important;background:#fff!important;box-shadow:none!important;animation:none!important;transform:none!important;}
+    .card-img,.card-feat-img,.card-hero-img{background:#f5f5f5!important;max-height:140px!important;}
+    .card-img-placeholder,.card-feat-img-placeholder,.card-hero-img-placeholder{background:#f5f5f5!important;}
+    .card-name,.card-feat-name,.card-hero-name{color:#000!important;}
+    .card-ref,.card-feat-ref,.card-hero-ref{color:#666!important;}
+    .badge-new{background:#f0a030!important;color:#000!important;}
+    .cat-blocos,.cat-educativos,.cat-jogos,.cat-esportes,.cat-playground{color:#333!important;background:#eee!important;}
+    .section-title{color:#555!important;}
+    .section-title::after{background:#ddd!important;}
+    .print-header{display:block!important;}
+  }
+  .print-header{display:none;padding:16px 0 12px;border-bottom:2px solid #f0a030;margin-bottom:16px;}
+  .print-header h2{font-family:'Fredoka',sans-serif;font-size:1.6rem;color:#0E2148;}
+  .print-header p{font-size:.8rem;color:#666;margin-top:4px;}
   .theme-btn{position:absolute;top:20px;right:20px;display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.14);border-radius:100px;padding:7px 14px;cursor:pointer;font-family:'Quicksand',sans-serif;font-size:.7rem;font-weight:700;color:rgba(255,255,255,.6);transition:all .25s;z-index:5;}
   .theme-btn:hover{background:rgba(255,255,255,.14);color:rgba(255,255,255,.9);}
   .theme-btn .tb-icon{font-size:.95rem;line-height:1;}
@@ -421,6 +446,10 @@
 
 <main class="main">
   <div class="hero">
+    <button class="pdf-btn" id="pdfBtn" onclick="exportarPDF()">
+      <span>📄</span>
+      <span>Salvar PDF</span>
+    </button>
     <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">
       <span class="tb-icon" id="themeIcon">☀️</span>
       <span id="themeLabel">Modo Claro</span>
@@ -448,6 +477,10 @@
     <button class="filter-btn" onclick="filterCat('playground',this)">Playground <span class="filter-count">3</span></button>
   </div>
 
+  <div class="print-header" id="printHeader">
+    <h2>🚀 Lançamentos Xalingo 2026</h2>
+    <p id="printSubtitle">Catálogo de novidades — Xalingo Brinquedos</p>
+  </div>
   <div class="content" id="content"></div>
 </main>
 
@@ -500,7 +533,7 @@ const PRODUCTS = [
   {ref:"20410",nome:"DOMINÓ MULTIPLICAÇÃO E DIVISÃO - 28 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/02/20/domino-multiplicacao-e-divisao-28-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2041.0-DOMINO-MULTIPLICACAO-E-DIVISAO-28-PCS-5-1024x999.png",cat:"educativos",idade:"+6 anos",ean:"7896640426620"},
 
   // ── JOGOS (1) ──
-  {ref:"20498",nome:"ADIVINHA PRIMEIRO!",site:"https://produtosxalingo.oneweb.com.br/2026/03/11/adivinha-primeiro/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2049.8-ADIVINHA-PRIMEIRO-1024x862.png",cat:"jogos",idade:"+4 anos",ean:"7896640426859"},
+  {ref:"20498",nome:"ADIVINHA PRIMEIRO!",site:"https://produtosxalingo.oneweb.com.br/2026/03/11/adivinha-primeiro/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2049.8-ADIVINHA-PRIMEIRO-EMB-1-1024x862.png",cat:"jogos",idade:"+4 anos",ean:"7896640426859"},
 
   // ── ESPORTES (1) ──
   {ref:"20432",nome:"TABELA DE BASQUETE PLAY",site:"https://produtosxalingo.oneweb.com.br/2026/02/19/tabela-de-basquete-play/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/02/20432-TABELA-BASQUETE-PLAY-4-730x730.png",cat:"esportes",idade:"+3 anos",ean:"7896640426682"},
@@ -786,6 +819,17 @@ function toggleTheme(){
 })();
 
 renderContent('all');
+
+function exportarPDF(){
+  // Descobre o filtro ativo atual
+  const activeBtn = document.querySelector('.filter-btn.active');
+  const filterLabel = activeBtn ? activeBtn.textContent.trim() : 'Todos';
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  document.getElementById('printSubtitle').textContent =
+    'Filtro: ' + filterLabel + '  ·  Gerado em ' + dateStr + '  ·  Xalingo Brinquedos';
+  window.print();
+}
 </script>
 </body>
 </html>
