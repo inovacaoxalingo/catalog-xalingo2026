@@ -59,6 +59,31 @@
   .page-img { display: block; width: 100%; height: auto; }
   .section-anchor { display: block; position: relative; top: -10px; visibility: hidden; height: 0; }
 
+  /* ── Véu de produto indisponível ─────────────────────────── */
+  .page-wrap { position: relative; display: block; line-height: 0; }
+  .page-veil {
+    position: absolute;
+    z-index: 4;
+    pointer-events: none;
+    background: rgba(255,255,255,0.84);
+    container-type: inline-size;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page-veil span {
+    position: absolute;
+    left: 50%;
+    top: var(--rotulo-y, 50%);
+    transform: translate(-50%, -50%);
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 600;
+    color: #333;
+    line-height: 1;
+    white-space: nowrap;
+    font-size: 0.85rem;      /* fallback p/ navegador sem container query */
+    font-size: 2.6cqw;       /* acompanha a largura da página */
+  }
+
   .sb-toggle { display: none; position: fixed; top: 14px; left: 14px; z-index: 60; width: 42px; height: 42px; background: rgba(27,58,92,0.92); color: white; border: 2px solid rgba(255,255,255,0.15); border-radius: 12px; cursor: pointer; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
   .sb-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 35; }
   .back-to-top { position: fixed; bottom: 20px; right: 20px; width: 42px; height: 42px; background: rgba(27,58,92,0.9); color: white; border: 2px solid rgba(255,255,255,0.15); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.25); z-index: 30; opacity: 0; pointer-events: none; transition: all 0.3s; }
@@ -406,6 +431,50 @@
 </button>
 
 <script>
+  // ── Refs marcadas como INDISPONÍVEIS ─────────────────────
+  // Cobre a área do produto com um véu branco + o rótulo.
+  // img    = arquivo da página (sem a extensão)
+  // caixa  = % da PÁGINA inteira: top / left / width / height
+  //          página com 2 produtos → bloco de cima  {top:0,  height:50}
+  //                                  bloco de baixo {top:50, height:50}
+  //          a faixa colorida da lateral começa em 94% → width:94 p/ não cobri-la
+  // textoY = altura do rótulo, também em % da página (sem ele, fica no meio do véu)
+  const REFS_INDISPONIVEIS = {
+    '60598': { img: 'jogos-p0014', top: 0, left: 0, width: 94, height: 50, textoY: 22, texto: 'Indisponível no momento' }
+  };
+
+  function renderVeils() {
+    Object.entries(REFS_INDISPONIVEIS).forEach(([ref, v]) => {
+      if (!v.img) return;
+      const img = document.querySelector(`img[src*="${v.img}"]`);
+      if (!img) return;
+      let wrap = img.parentElement;
+      if (!wrap.classList.contains('page-wrap')) {
+        const novo = document.createElement('div');
+        novo.className = 'page-wrap';
+        img.parentNode.insertBefore(novo, img);
+        novo.appendChild(img);
+        wrap = novo;
+      }
+      const topo = v.top != null ? v.top : 0;
+      const altura = v.height != null ? v.height : 50;
+      const veu = document.createElement('div');
+      veu.className = 'page-veil';
+      veu.dataset.ref = ref;
+      veu.style.top    = topo + '%';
+      veu.style.left   = (v.left  != null ? v.left  : 0)  + '%';
+      veu.style.width  = (v.width != null ? v.width : 94) + '%';
+      veu.style.height = altura + '%';
+      const rotuloY = v.textoY != null ? v.textoY : topo + altura / 2;
+      veu.style.setProperty('--rotulo-y', ((rotuloY - topo) / altura * 100) + '%');
+      const rotulo = document.createElement('span');
+      rotulo.textContent = v.texto || 'Indisponível no momento';
+      veu.appendChild(rotulo);
+      wrap.appendChild(veu);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', renderVeils);
+
   function toggleCat(el) { if (event && event.target.closest('.sb-sub')) return; el.classList.toggle('open'); }
   function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sbOverlay').classList.toggle('open'); }
   document.querySelectorAll('.sb-sub[href^="#"]').forEach(link => { link.addEventListener('click', () => { if (window.innerWidth <= 860) toggleSidebar(); }); });
