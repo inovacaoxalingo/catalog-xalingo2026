@@ -493,7 +493,701 @@
   @keyframes flash-result { 0%{opacity:.4} 100%{opacity:1} }
   .sb-result-item.highlight-flash { animation: flash-result 0.5s ease; }
 
-</style>
+
+  /* ===== PRICE OVERLAYS ===== */
+  .page-wrap { position:relative; display:block; line-height:0; }
+  /* Véu "Indisponível no momento" (REFS_INDISPONIVEIS) */
+  .page-veil {
+    position:absolute; z-index:15; pointer-events:none;
+    background:rgba(255,255,255,0.84);
+    container-type:inline-size;
+  }
+  .page-veil-label {
+    position:absolute; left:0; right:0; top:var(--rotulo-y,50%);
+    transform:translateY(-50%); text-align:center;
+    font-family:'Open Sans','Quicksand',sans-serif; font-weight:400;
+    color:#333; line-height:1.2; font-size:var(--rotulo-fs,2.6cqw);
+  }
+    .price-badge {
+    position: absolute;
+    z-index: 20;
+    cursor: pointer;
+    font-family: 'Quicksand', sans-serif;
+    transform: scale(0.67); /* compensate for zoom:1.5 on .main */
+    transform-origin: top left;
+  }
+
+  .price-tag {
+    background: rgba(160,30,30,0.86);
+    border-radius: 8px;
+    padding: 4px 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease;
+    white-space: nowrap;
+  }
+  .price-tag:hover { transform: scale(1.05); }
+
+  .price-ref {
+    font-size: 0.55rem; font-weight: 700; color: rgba(255,255,255,0.55);
+    letter-spacing: 0.3px; line-height: 1; margin-bottom: 1px;
+  }
+  .price-main {
+    font-size: 0.9rem; font-weight: 800; color: #fff;
+    line-height: 1.1; letter-spacing: -0.2px;
+  }
+  .price-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:200; align-items:center; justify-content:center; }
+  .price-modal-overlay.open { display:flex; }
+  .price-modal { background:#fff; border-radius:18px; padding:22px 24px 20px; width:340px; max-width:92vw; box-shadow:0 20px 60px rgba(0,0,0,0.3); font-family:'Quicksand',sans-serif; position:relative; }
+  .pm-close { position:absolute; top:12px; right:14px; background:none; border:none; font-size:1.3rem; cursor:pointer; color:#888; }
+  .pm-ref { font-size:0.65rem; font-weight:700; color:#999; margin-bottom:2px; }
+  .pm-nome { font-size:0.85rem; font-weight:800; color:#1B3A5C; line-height:1.3; margin-bottom:14px; }
+  .pm-prices { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+  .pm-price-box { background:#f3f6fb; border-radius:10px; padding:8px 10px; }
+  .pm-price-label { font-size:0.58rem; font-weight:700; color:#888; text-transform:uppercase; }
+  .pm-price-val { font-size:1.05rem; font-weight:800; color:#1B3A5C; }
+  .pm-info { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .pm-info-item { background:#f3f6fb; border-radius:8px; padding:5px 10px; font-size:0.7rem; font-weight:700; color:#1B3A5C; }
+  .pm-info-item span { font-weight:500; color:#666; }
+  .pm-ean { font-size:0.62rem; color:#aaa; margin-top:6px; line-height:1.6; }
+  .pm-launch { background:#fff3d8; border:1.5px solid #f89e1c; border-radius:8px; padding:6px 10px; margin-top:10px; font-size:0.72rem; font-weight:700; color:#8a5a0e; }
+  .pm-stock-ok { color:#3a7520; } .pm-stock-zero { color:#c0392b; }
+
+  /* ===== ICMS SELECTOR ===== */
+  .sb-icms { padding:10px 10px 12px; border-bottom:1px solid rgba(0,0,0,0.07); flex-shrink:0; }
+  .sb-icms-title { font-size:0.6rem; font-weight:700; color:rgba(27,58,92,0.5); letter-spacing:0.6px; text-transform:uppercase; margin-bottom:7px; display:flex; align-items:center; gap:5px; }
+  .sb-icms-title::before { content:''; display:inline-block; width:4px; height:12px; background:#1B3A5C; border-radius:3px; opacity:0.4; flex-shrink:0; }
+  .sb-icms-btns { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+  .sb-icms-btn { font-family:'Quicksand',sans-serif; font-size:0.62rem; font-weight:700; padding:5px 4px; border-radius:8px; border:1.5px solid rgba(27,58,92,0.15); background:rgba(255,255,255,0.6); color:rgba(27,58,92,0.55); cursor:pointer; transition:all 0.18s ease; text-align:center; line-height:1.2; }
+  .sb-icms-btn:hover { background:rgba(27,58,92,0.08); color:#1B3A5C; border-color:rgba(27,58,92,0.3); }
+  .sb-icms-btn.active { background:#1B3A5C; color:#fff; border-color:#1B3A5C; }
+
+  .order-toggle {
+    position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+    z-index: 90; background: #1B3A5C; color: #fff;
+    border: none; border-radius: 12px 0 0 12px;
+    padding: 14px 10px; cursor: pointer;
+    font-family: 'Quicksand', sans-serif; font-weight: 700;
+    writing-mode: vertical-rl; font-size: 0.75rem;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    transition: background 0.2s;
+  }
+  .order-toggle:hover { background: #2a5080; }
+  .order-toggle-badge {
+    background: #A01E1E; color: #fff; border-radius: 50%;
+    width: 22px; height: 22px; font-size: 0.7rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    writing-mode: horizontal-tb;
+  }
+
+  .order-sidebar {
+    position: fixed; right: -540px; top: 0; bottom: 0; width: 520px;
+    background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+    z-index: 150; display: flex; flex-direction: column;
+    transition: right 0.3s ease; border-left: 1px solid rgba(0,0,0,0.1);
+  }
+  @media (max-width: 560px) {
+    .order-sidebar { width: 100vw; right: -100vw; }
+  }
+  .order-sidebar.open { right: 0; }
+  .order-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+    z-index: 140;
+  }
+  .order-overlay.open { display: block; }
+
+  .os-header {
+    background: #1B3A5C; color: #fff; padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  }
+  .os-title { font-size: 0.95rem; font-weight: 700; }
+  .os-subtitle { font-size: 0.7rem; opacity: 0.65; margin-top: 2px; }
+  .os-close { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; opacity: 0.7; }
+  .os-close:hover { opacity: 1; }
+
+  .os-icms-bar {
+    padding: 8px 12px; border-bottom: 1px solid rgba(0,0,0,0.08);
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex-shrink: 0;
+    background: #f7f5f2;
+  }
+  .os-icms-label { font-size: 0.62rem; font-weight: 700; color: #888; text-transform: uppercase; }
+  .os-icms-btn {
+    font-family: 'Quicksand', sans-serif; font-size: 0.65rem; font-weight: 700;
+    padding: 3px 9px; border-radius: 6px; border: 1.5px solid rgba(0,0,0,0.12);
+    background: transparent; color: #888; cursor: pointer; transition: all 0.15s;
+  }
+  .os-icms-btn:hover { border-color: #1B3A5C; color: #1B3A5C; }
+  .os-icms-btn.active { background: #1B3A5C; color: #fff; border-color: #1B3A5C; }
+
+  .os-body { flex: 1; overflow-y: auto; padding: 10px; }
+  .os-empty { text-align: center; padding: 40px 16px; color: #aaa; font-size: 0.85rem; }
+
+  .os-section-label {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #888; padding: 6px 4px 4px;
+    border-bottom: 1px solid rgba(0,0,0,0.08); margin-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .os-section-sub { font-weight: 700; font-size: 0.78rem; color: #A01E1E; }
+
+  .os-item {
+    border: 1px solid rgba(0,0,0,0.09); border-radius: 10px;
+    padding: 9px 10px; margin-bottom: 6px; display: grid;
+    grid-template-columns: 52px 1fr auto; gap: 8px;
+  }
+  .os-item.is-lanc { border-color: #f0a030; background: #fffbf2; }
+  .os-item-thumb { width: 52px; height: 52px; object-fit: contain; border-radius: 6px; background: #f5f5f5; align-self: center; }
+  .os-item-thumb-empty { width: 52px; height: 52px; border-radius: 6px; background: #eee; align-self: center; }
+  .os-item-left { min-width: 0; }
+  .os-ref { font-size: 0.6rem; font-weight: 700; color: #aaa; }
+  .os-nome { font-size: 0.75rem; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .os-price { font-size: 0.8rem; color: #A01E1E; font-weight: 700; margin-top: 2px; }
+  .os-meta { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .os-badge {
+    font-size: 0.58rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;
+    background: #eee; color: #555;
+  }
+  .os-badge.nac { background: #e0f0e0; color: #2a6a2a; }
+  .os-badge.imp { background: #e0e8f5; color: #1B3A5C; }
+  .os-badge.est-ok { background: #e0f0e0; color: #2a6a2a; }
+  .os-badge.est-zero { background: #fde8e8; color: #A01E1E; }
+  .os-badge.lanc-date { background: #fff0cc; color: #7a5000; border: 1px solid #f0a030; }
+  .os-warn { font-size: 0.62rem; color: #c05000; font-weight: 700; margin-top: 3px; }
+
+  .os-item-right { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+  .os-qty-row { display: flex; align-items: center; gap: 3px; }
+  .os-qty-btn {
+    width: 22px; height: 22px; border: 1px solid rgba(0,0,0,0.12);
+    background: #f4f1ed; border-radius: 5px; font-size: 0.85rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: #1B3A5C; transition: background 0.1s;
+  }
+  .os-qty-btn:hover { background: #e0dcd6; }
+  .os-qty-input {
+    width: 38px; height: 22px; border: 1px solid rgba(0,0,0,0.12); border-radius: 5px;
+    text-align: center; font-family: 'Quicksand', sans-serif; font-size: 0.78rem; font-weight: 700;
+  }
+  .os-qty-input:focus { outline: none; border-color: #1B3A5C; }
+  .os-del { background: none; border: none; color: #ccc; cursor: pointer; font-size: 0.75rem; padding: 2px; }
+  .os-del:hover { color: #A01E1E; }
+
+  .os-footer { border-top: 1px solid rgba(0,0,0,0.1); padding: 12px 14px; flex-shrink: 0; background: #f7f5f2; }
+  .os-totals { font-size: 0.8rem; margin-bottom: 10px; }
+  .os-total-row { display: flex; justify-content: space-between; padding: 2px 0; }
+  .os-total-row .lbl { color: #888; }
+  .os-total-row .val { font-weight: 700; }
+  .os-total-main { border-top: 1px solid rgba(0,0,0,0.12); margin-top: 6px; padding-top: 6px; font-size: 0.95rem; }
+  .os-total-main .val { color: #A01E1E; font-size: 1rem; }
+  .os-action-btns { display: flex; gap: 6px; }
+  .os-btn-clear { flex: 1; background: transparent; border: 1px solid rgba(0,0,0,0.12); border-radius: 8px; padding: 8px; font-family: 'Quicksand', sans-serif; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: #A01E1E; }
+  .os-btn-print { flex: 2; background: #1B3A5C; color: #fff; border: none; border-radius: 8px; padding: 8px; font-family: 'Quicksand', sans-serif; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+  .os-btn-print:hover { opacity: 0.9; }
+
+
+  .price-badge.selected .price-tag {
+    background: rgba(27,100,27,0.88) !important;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.6), 0 2px 8px rgba(0,0,0,0.3) !important;
+  }
+  .price-badge .badge-info-btn {
+    position: absolute; top: -6px; right: -6px;
+    width: 16px; height: 16px; background: rgba(255,255,255,0.9);
+    border: none; border-radius: 50%; font-size: 0.6rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #1B3A5C; font-weight: 700; opacity: 0; transition: opacity 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .price-badge:hover .badge-info-btn { opacity: 1; }
+
+
+  /* ===== DISCOUNT SYSTEM ===== */
+  .os-discount-trigger {
+    display: flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 8px; cursor: pointer;
+    transition: all 0.2s; flex-shrink: 0;
+    position: relative;
+  }
+  .os-discount-trigger svg { width: 13px; height: 13px; fill: none; stroke: rgba(255,255,255,0.35); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.2s; }
+  .os-discount-trigger:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+  .os-discount-trigger:hover svg { stroke: rgba(255,255,255,0.7); }
+  .os-discount-trigger.active { background: rgba(240,192,64,0.15); border-color: rgba(240,192,64,0.5); }
+  .os-discount-trigger.active svg { stroke: #f0c040; }
+  .os-disc-pct-badge {
+    position: absolute; top: -6px; right: -7px;
+    background: #f0c040; color: #3a2800;
+    font-family: 'Quicksand', sans-serif; font-size: 0.5rem; font-weight: 800;
+    padding: 1px 4px; border-radius: 20px; white-space: nowrap;
+    display: none; line-height: 1.4;
+  }
+  .os-discount-trigger.active .os-disc-pct-badge { display: block; }
+
+  .os-discount-bar {
+    display: none; padding: 14px 14px 12px;
+    background: #f0f4f8;
+    border-bottom: 2px solid #1B3A5C;
+    flex-shrink: 0; animation: discSlideIn 0.2s ease;
+  }
+  @keyframes discSlideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  .os-discount-bar.open { display: block; }
+
+  .os-disc-section-label {
+    font-size: 0.55rem; font-weight: 800; color: #1B3A5C;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 6px; opacity: 0.5;
+  }
+  .os-disc-section-label::after {
+    content: ''; flex: 1; height: 1px; background: #1B3A5C; opacity: 0.2;
+  }
+
+  .os-discount-clusters {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 5px; margin-bottom: 12px;
+  }
+  .os-dc-btn {
+    font-family: 'Quicksand', sans-serif; font-size: 0.62rem; font-weight: 700;
+    padding: 6px 10px; border-radius: 8px;
+    border: 1.5px solid rgba(27,58,92,0.15);
+    background: #fff; color: #1B3A5C;
+    cursor: pointer; transition: all 0.16s; white-space: nowrap;
+    text-align: left; line-height: 1.3; display: flex; align-items: center; justify-content: space-between;
+  }
+  .os-dc-btn .dc-pct { font-size: 0.68rem; font-weight: 800; color: rgba(27,58,92,0.4); transition: color 0.16s; }
+  .os-dc-btn:hover { background: rgba(27,58,92,0.06); border-color: rgba(27,58,92,0.3); }
+  .os-dc-btn:hover .dc-pct { color: #1B3A5C; }
+  .os-dc-btn.active { background: #1B3A5C; border-color: #1B3A5C; color: #fff; }
+  .os-dc-btn.active .dc-pct { color: rgba(255,255,255,0.7); }
+  .os-dc-btn.dc-none { grid-column: 1/-1; justify-content: center; }
+  .os-dc-btn.dc-none.active { background: rgba(27,58,92,0.08); border-color: rgba(27,58,92,0.2); color: rgba(27,58,92,0.55); }
+
+  .os-disc-manual-row {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff; border: 1.5px solid rgba(27,58,92,0.15);
+    border-radius: 8px; padding: 6px 10px;
+  }
+  .os-disc-manual-row label {
+    font-size: 0.6rem; font-weight: 700; color: rgba(27,58,92,0.5);
+    white-space: nowrap; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .os-disc-manual-row input {
+    flex: 1; min-width: 0; padding: 2px 4px; border-radius: 5px;
+    border: none; background: transparent; color: #1B3A5C;
+    font-family: 'Quicksand', sans-serif; font-size: 0.9rem; font-weight: 800;
+    outline: none; text-align: center; width: 40px;
+  }
+  .os-disc-manual-row input::-webkit-inner-spin-button { opacity: 0; }
+  .os-disc-manual-unit { font-size: 0.7rem; font-weight: 700; color: rgba(27,58,92,0.4); flex-shrink: 0; }
+  .os-disc-manual-btns { display: flex; gap: 3px; flex-shrink: 0; }
+  .os-disc-manual-btns button {
+    width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid rgba(27,58,92,0.15);
+    background: rgba(27,58,92,0.05); color: #1B3A5C;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer; line-height: 1;
+    transition: all 0.15s; font-family: 'Quicksand', sans-serif;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .os-disc-manual-btns button:hover { background: #1B3A5C; border-color: #1B3A5C; color: #fff; }
+
+  /* Password modal */
+  .disc-pwd-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 500;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .disc-pwd-overlay.open { display: flex; }
+  .disc-pwd-box {
+    background: #0f1c2a;
+    border: 1px solid rgba(240,192,64,0.2);
+    border-radius: 20px; padding: 28px 28px 24px;
+    width: 310px; max-width: 92vw;
+    font-family: 'Quicksand', sans-serif;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04) inset;
+    animation: pwdPop 0.22s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes pwdPop { from { opacity:0; transform: scale(0.9) translateY(10px); } to { opacity:1; transform: scale(1) translateY(0); } }
+  .disc-pwd-lock {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(240,192,64,0.12); border: 1.5px solid rgba(240,192,64,0.25);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+  }
+  .disc-pwd-lock svg { width: 20px; height: 20px; fill: none; stroke: #f0c040; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .disc-pwd-title { font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 3px; }
+  .disc-pwd-sub { font-size: 0.7rem; color: rgba(255,255,255,0.3); margin-bottom: 18px; line-height: 1.5; }
+  .disc-pwd-err {
+    font-size: 0.68rem; color: #ff8080; font-weight: 700;
+    margin-bottom: 10px; display: none; padding: 7px 11px;
+    background: rgba(255,80,80,0.08); border-radius: 8px;
+    border: 1px solid rgba(255,80,80,0.18); line-height: 1.4;
+  }
+  .disc-pwd-err.show { display: block; }
+  .disc-pwd-input {
+    width: 100%; padding: 11px 14px; border-radius: 11px;
+    border: 1.5px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05); color: #fff;
+    font-family: 'Quicksand', sans-serif; font-size: 1.1rem; font-weight: 700;
+    outline: none; letter-spacing: 4px; margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  .disc-pwd-input:focus { border-color: rgba(240,192,64,0.5); box-shadow: 0 0 0 3px rgba(240,192,64,0.08); }
+  .disc-pwd-btns { display: flex; gap: 8px; }
+  .disc-pwd-ok {
+    flex: 1; padding: 11px; border-radius: 11px; border: none;
+    background: #f0c040; color: #3a2800;
+    font-family: 'Quicksand', sans-serif; font-size: 0.82rem; font-weight: 800;
+    cursor: pointer; transition: all 0.18s; letter-spacing: 0.2px;
+  }
+  .disc-pwd-ok:hover { background: #f5ce5a; transform: translateY(-1px); }
+  .disc-pwd-ok:active { transform: scale(0.98); }
+  .disc-pwd-cancel {
+    padding: 11px 16px; border-radius: 11px;
+    border: 1.5px solid rgba(255,255,255,0.08);
+    background: transparent; color: rgba(255,255,255,0.3);
+    font-family: 'Quicksand', sans-serif; font-size: 0.78rem; font-weight: 700;
+    cursor: pointer; transition: all 0.18s;
+  }
+  .disc-pwd-cancel:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); }
+
+
+  /* ===== ICMS SELECTOR ===== */
+  .sb-icms {
+    padding: 10px 10px 12px;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+    flex-shrink: 0;
+  }
+  .sb-icms-title {
+    font-size: 0.6rem; font-weight: 700; color: rgba(27,58,92,0.5);
+    letter-spacing: 0.6px; text-transform: uppercase;
+    margin-bottom: 7px; display: flex; align-items: center; gap: 5px;
+  }
+  .sb-icms-title::before {
+    content: ''; display: inline-block; width: 4px; height: 12px;
+    background: #1B3A5C; border-radius: 3px; opacity: 0.4; flex-shrink: 0;
+  }
+  .sb-icms-btns {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .sb-icms-btn {
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.62rem; font-weight: 700;
+    padding: 5px 4px; border-radius: 8px;
+    border: 1.5px solid rgba(27,58,92,0.15);
+    background: rgba(255,255,255,0.6);
+    color: rgba(27,58,92,0.55);
+    cursor: pointer; transition: all 0.18s ease;
+    text-align: center; line-height: 1.2;
+  }
+  .sb-icms-btn:hover {
+    background: rgba(27,58,92,0.08);
+    color: #1B3A5C;
+    border-color: rgba(27,58,92,0.3);
+  }
+  .sb-icms-btn.active {
+    background: #1B3A5C;
+    color: #fff;
+    border-color: #1B3A5C;
+  }
+
+
+  /* ===== RIGHT ORDER SIDEBAR ===== */
+  .order-toggle {
+    position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+    z-index: 90; background: #1B3A5C; color: #fff;
+    border: none; border-radius: 12px 0 0 12px;
+    padding: 14px 10px; cursor: pointer;
+    font-family: 'Quicksand', sans-serif; font-weight: 700;
+    writing-mode: vertical-rl; font-size: 0.75rem;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    transition: background 0.2s;
+  }
+  .order-toggle:hover { background: #2a5080; }
+  .order-toggle-badge {
+    background: #A01E1E; color: #fff; border-radius: 50%;
+    width: 22px; height: 22px; font-size: 0.7rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    writing-mode: horizontal-tb;
+  }
+
+  .order-sidebar {
+    position: fixed; right: -540px; top: 0; bottom: 0; width: 520px;
+    background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+    z-index: 150; display: flex; flex-direction: column;
+    transition: right 0.3s ease; border-left: 1px solid rgba(0,0,0,0.1);
+  }
+  @media (max-width: 560px) {
+    .order-sidebar { width: 100vw; right: -100vw; }
+  }
+  .order-sidebar.open { right: 0; }
+  .order-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+    z-index: 140;
+  }
+  .order-overlay.open { display: block; }
+
+  .os-header {
+    background: #1B3A5C; color: #fff; padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  }
+  .os-title { font-size: 0.95rem; font-weight: 700; }
+  .os-subtitle { font-size: 0.7rem; opacity: 0.65; margin-top: 2px; }
+  .os-close { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; opacity: 0.7; }
+  .os-close:hover { opacity: 1; }
+
+  .os-icms-bar {
+    padding: 8px 12px; border-bottom: 1px solid rgba(0,0,0,0.08);
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex-shrink: 0;
+    background: #f7f5f2;
+  }
+  .os-icms-label { font-size: 0.62rem; font-weight: 700; color: #888; text-transform: uppercase; }
+  .os-icms-btn {
+    font-family: 'Quicksand', sans-serif; font-size: 0.65rem; font-weight: 700;
+    padding: 3px 9px; border-radius: 6px; border: 1.5px solid rgba(0,0,0,0.12);
+    background: transparent; color: #888; cursor: pointer; transition: all 0.15s;
+  }
+  .os-icms-btn:hover { border-color: #1B3A5C; color: #1B3A5C; }
+  .os-icms-btn.active { background: #1B3A5C; color: #fff; border-color: #1B3A5C; }
+
+  .os-body { flex: 1; overflow-y: auto; padding: 10px; }
+  .os-empty { text-align: center; padding: 40px 16px; color: #aaa; font-size: 0.85rem; }
+
+  .os-section-label {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #888; padding: 6px 4px 4px;
+    border-bottom: 1px solid rgba(0,0,0,0.08); margin-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .os-section-sub { font-weight: 700; font-size: 0.78rem; color: #A01E1E; }
+
+  .os-item {
+    border: 1px solid rgba(0,0,0,0.09); border-radius: 10px;
+    padding: 9px 10px; margin-bottom: 6px; display: grid;
+    grid-template-columns: 52px 1fr auto; gap: 8px;
+  }
+  .os-item.is-lanc { border-color: #f0a030; background: #fffbf2; }
+  .os-item-thumb { width: 52px; height: 52px; object-fit: contain; border-radius: 6px; background: #f5f5f5; align-self: center; }
+  .os-item-thumb-empty { width: 52px; height: 52px; border-radius: 6px; background: #eee; align-self: center; }
+  .os-item-left { min-width: 0; }
+  .os-ref { font-size: 0.6rem; font-weight: 700; color: #aaa; }
+  .os-nome { font-size: 0.75rem; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .os-price { font-size: 0.8rem; color: #A01E1E; font-weight: 700; margin-top: 2px; }
+  .os-meta { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .os-badge {
+    font-size: 0.58rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;
+    background: #eee; color: #555;
+  }
+  .os-badge.nac { background: #e0f0e0; color: #2a6a2a; }
+  .os-badge.imp { background: #e0e8f5; color: #1B3A5C; }
+  .os-badge.est-ok { background: #e0f0e0; color: #2a6a2a; }
+  .os-badge.est-zero { background: #fde8e8; color: #A01E1E; }
+  .os-badge.lanc-date { background: #fff0cc; color: #7a5000; border: 1px solid #f0a030; }
+  .os-warn { font-size: 0.62rem; color: #c05000; font-weight: 700; margin-top: 3px; }
+
+  .os-item-right { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+  .os-qty-row { display: flex; align-items: center; gap: 3px; }
+  .os-qty-btn {
+    width: 22px; height: 22px; border: 1px solid rgba(0,0,0,0.12);
+    background: #f4f1ed; border-radius: 5px; font-size: 0.85rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: #1B3A5C; transition: background 0.1s;
+  }
+  .os-qty-btn:hover { background: #e0dcd6; }
+  .os-qty-input {
+    width: 38px; height: 22px; border: 1px solid rgba(0,0,0,0.12); border-radius: 5px;
+    text-align: center; font-family: 'Quicksand', sans-serif; font-size: 0.78rem; font-weight: 700;
+  }
+  .os-qty-input:focus { outline: none; border-color: #1B3A5C; }
+  .os-del { background: none; border: none; color: #ccc; cursor: pointer; font-size: 0.75rem; padding: 2px; }
+  .os-del:hover { color: #A01E1E; }
+
+  .os-footer { border-top: 1px solid rgba(0,0,0,0.1); padding: 12px 14px; flex-shrink: 0; background: #f7f5f2; }
+  .os-totals { font-size: 0.8rem; margin-bottom: 10px; }
+  .os-total-row { display: flex; justify-content: space-between; padding: 2px 0; }
+  .os-total-row .lbl { color: #888; }
+  .os-total-row .val { font-weight: 700; }
+  .os-total-main { border-top: 1px solid rgba(0,0,0,0.12); margin-top: 6px; padding-top: 6px; font-size: 0.95rem; }
+  .os-total-main .val { color: #A01E1E; font-size: 1rem; }
+  .os-action-btns { display: flex; gap: 6px; }
+  .os-btn-clear { flex: 1; background: transparent; border: 1px solid rgba(0,0,0,0.12); border-radius: 8px; padding: 8px; font-family: 'Quicksand', sans-serif; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: #A01E1E; }
+  .os-btn-print { flex: 2; background: #1B3A5C; color: #fff; border: none; border-radius: 8px; padding: 8px; font-family: 'Quicksand', sans-serif; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+  .os-btn-print:hover { opacity: 0.9; }
+
+  /* Badge selected state */
+  .price-badge.selected .price-tag {
+    background: rgba(27,100,27,0.88) !important;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.6), 0 2px 8px rgba(0,0,0,0.3) !important;
+  }
+  .price-badge .badge-info-btn {
+    position: absolute; top: -6px; right: -6px;
+    width: 16px; height: 16px; background: rgba(255,255,255,0.9);
+    border: none; border-radius: 50%; cursor: pointer; font-size: 0.6rem;
+    font-weight: 700; color: #1B3A5C; display: flex; align-items: center;
+    justify-content: center; opacity: 0; transition: opacity 0.15s;
+    z-index: 5;
+  }
+  .price-badge:hover .badge-info-btn { opacity: 1; }
+
+
+  @media print {
+    .price-tag {
+      background: #a01e1e !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    .price-badge {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .price-main { color: #fff !important; }
+    .price-ref  { color: rgba(255,255,255,0.8) !important; }
+  }
+
+  /* ===== EXP-IND — Exportação Indireta ===== */
+  .sb-icms-btn.expind {
+    grid-column: 1 / -1; margin-top: 2px;
+    border-color: rgba(14,110,90,0.35); color: #0E6E5A;
+  }
+  .sb-icms-btn.expind:hover { background: rgba(14,110,90,0.08); border-color: #0E6E5A; color: #0E6E5A; }
+  .sb-icms-btn.expind.active { background: #0E6E5A; border-color: #0E6E5A; color: #fff; }
+  .os-icms-btn.expind { border-color: rgba(14,110,90,0.35); color: #0E6E5A; }
+  .os-icms-btn.expind:hover { border-color: #0E6E5A; color: #0E6E5A; }
+  .os-icms-btn.expind.active { background: #0E6E5A; border-color: #0E6E5A; color: #fff; }
+  .sb-expind-note {
+    display: none; margin-top: 7px; padding: 5px 7px;
+    font-size: 0.55rem; line-height: 1.4; font-weight: 600; color: #0E6E5A;
+    background: rgba(14,110,90,0.08); border: 1px solid rgba(14,110,90,0.2);
+    border-radius: 7px;
+  }
+  body.expind-mode .sb-expind-note { display: block; }
+  body.expind-mode .price-tag { background: rgba(14,110,90,0.88); }
+  body.expind-mode .price-badge[data-orig="IMP"] .price-tag::after {
+    content: '\26A0 IMPORTADO \B7 taxas dif.';
+    display: block; margin-top: 2px;
+    font-size: 0.5rem; font-weight: 700; letter-spacing: 0.2px;
+    color: #ffdf8a; line-height: 1.1;
+  }
+  .os-warn-imp {
+    font-size: 0.6rem; font-weight: 700; color: #0E6E5A; margin-top: 4px;
+    background: rgba(14,110,90,0.09); border-radius: 5px; padding: 3px 6px;
+    line-height: 1.3;
+  }
+  .pm-price-box.pm-expind {
+    grid-column: 1 / -1;
+    background: #e6f4f0; border: 1px solid rgba(14,110,90,0.25);
+  }
+  .pm-price-box.pm-expind .pm-price-val { color: #0E6E5A; }
+  .pm-imp-note {
+    font-size: 0.68rem; font-weight: 700; color: #0E6E5A; line-height: 1.4;
+    background: rgba(14,110,90,0.09); border: 1px solid rgba(14,110,90,0.2);
+    border-radius: 8px; padding: 7px 10px; margin-bottom: 10px;
+  }
+  @media print {
+    body.expind-mode .price-tag { background: #0E6E5A !important; }
+  }
+  /* ── Preço especial por produto (liberado só com a senha comercial) ─────── */
+  .os-ovr { margin-top: 6px; border-top: 1px dashed rgba(27,58,92,0.18); padding-top: 6px; }
+  .os-ovr-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .os-ovr-lbl { font-size: 0.56rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: #1B3A5C; opacity: 0.55; }
+  .os-ovr-mode { display: flex; border: 1.5px solid rgba(27,58,92,0.2); border-radius: 6px; overflow: hidden; }
+  .os-ovr-mode button {
+    font-family: 'Quicksand', sans-serif; font-size: 0.62rem; font-weight: 800;
+    padding: 2px 8px; border: none; background: transparent; color: #8a94a0; cursor: pointer;
+  }
+  .os-ovr-mode button.active { background: #1B3A5C; color: #fff; }
+  .os-ovr-input {
+    width: 66px; height: 22px; border: 1px solid rgba(0,0,0,0.15); border-radius: 5px;
+    text-align: center; font-family: 'Quicksand', sans-serif; font-size: 0.72rem; font-weight: 700;
+  }
+  .os-ovr-input:focus { outline: none; border-color: #0E8A5F; }
+  .os-ovr-clear { background: none; border: none; color: #bbb; cursor: pointer; font-size: 0.7rem; font-weight: 700; padding: 2px 3px; }
+  .os-ovr-clear:hover { color: #A01E1E; }
+  .os-ovr-res { font-size: 0.62rem; font-weight: 800; color: #0E8A5F; }
+  .os-badge.ovr { background: #e8f5ee; color: #0E6E5A; border: 1px solid rgba(14,110,90,0.35); }
+  .os-badge.ovr-warn { background: #fff0cc; color: #8a5000; }
+  .os-item.has-ovr { border-color: rgba(14,138,95,0.55); background: #f7fdfa; }
+  .os-item.has-ovr.is-lanc { border-color: #f0a030; background: #fffbf2; }
+  .os-ovr-clearall {
+    width: 100%; margin-top: 7px; font-family: 'Quicksand', sans-serif; font-size: 0.62rem;
+    font-weight: 800; padding: 5px; border-radius: 6px; border: 1.5px solid rgba(160,30,30,0.25);
+    background: transparent; color: #A01E1E; cursor: pointer;
+  }
+  .os-ovr-clearall:hover { background: rgba(160,30,30,0.06); }
+  .os-ovr-hint { font-size: 0.62rem; color: #1B3A5C; opacity: 0.6; font-weight: 600; line-height: 1.3; }
+  .price-badge.has-ovr .price-tag { box-shadow: 0 0 0 2px #0E8A5F; }
+
+  /* ── Modal de dados do pedido (antes de gerar o PDF) ────────────────────── */
+  .ped-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(12,20,32,0.55);
+    z-index: 400; align-items: center; justify-content: center; padding: 18px;
+    backdrop-filter: blur(3px);
+  }
+  .ped-overlay.open { display: flex; }
+  .ped-box {
+    background: #fff; border-radius: 16px; width: 640px; max-width: 100%;
+    max-height: 92vh; display: flex; flex-direction: column; overflow: hidden;
+    font-family: 'Quicksand', sans-serif; box-shadow: 0 26px 70px rgba(0,0,0,0.35);
+  }
+  .ped-head {
+    background: #1B3A5C; color: #fff; padding: 14px 18px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+  }
+  .ped-title { font-size: 0.98rem; font-weight: 800; }
+  .ped-sub { font-size: 0.7rem; opacity: 0.7; margin-top: 3px; }
+  .ped-x { background: none; border: none; color: #fff; font-size: 1.1rem; cursor: pointer; opacity: 0.7; }
+  .ped-x:hover { opacity: 1; }
+  .ped-body { padding: 14px 18px 18px; overflow-y: auto; }
+  .ped-sec {
+    font-size: 0.63rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px;
+    color: #1B3A5C; opacity: 0.55; margin: 14px 0 7px; display: flex; align-items: center; gap: 8px;
+  }
+  .ped-sec:first-child { margin-top: 0; }
+  .ped-sec::after { content: ''; flex: 1; height: 1px; background: rgba(27,58,92,0.12); }
+  .ped-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ped-f { display: flex; flex-direction: column; gap: 3px; }
+  .ped-f.ped-2 { grid-column: 1/-1; }
+  .ped-f span { font-size: 0.62rem; font-weight: 700; color: #1B3A5C; opacity: 0.6; }
+  .ped-f input, .ped-f select, #pedObs {
+    width: 100%; font-family: 'Quicksand', sans-serif; font-size: 0.78rem; font-weight: 600;
+    padding: 7px 9px; border: 1.5px solid rgba(27,58,92,0.16); border-radius: 8px;
+    color: #1a2634; background: #fff;
+  }
+  .ped-f input:focus, .ped-f select:focus, #pedObs:focus { outline: none; border-color: #1B3A5C; }
+  #pedObs { resize: vertical; line-height: 1.45; }
+  .ped-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 7px; }
+  .ped-chips button {
+    font-family: 'Quicksand', sans-serif; font-size: 0.64rem; font-weight: 700;
+    padding: 3px 9px; border-radius: 20px; border: 1.5px solid rgba(27,58,92,0.18);
+    background: transparent; color: #1B3A5C; cursor: pointer;
+  }
+  .ped-chips button:hover { background: #1B3A5C; color: #fff; border-color: #1B3A5C; }
+  .ped-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 12px; }
+  .ped-opts label {
+    display: flex; align-items: center; gap: 7px; font-size: 0.72rem;
+    font-weight: 600; color: #26374a; cursor: pointer; padding: 3px 0;
+  }
+  .ped-opts input { width: 15px; height: 15px; accent-color: #1B3A5C; cursor: pointer; }
+  .ped-foot {
+    border-top: 1px solid rgba(0,0,0,0.08); padding: 12px 18px; background: #f7f5f2;
+    display: flex; gap: 8px; justify-content: flex-end;
+  }
+  .ped-cancel {
+    font-family: 'Quicksand', sans-serif; font-size: 0.78rem; font-weight: 700;
+    padding: 9px 18px; border-radius: 9px; border: 1.5px solid rgba(0,0,0,0.15);
+    background: transparent; color: #555; cursor: pointer;
+  }
+  .ped-ok {
+    font-family: 'Quicksand', sans-serif; font-size: 0.8rem; font-weight: 800;
+    padding: 9px 22px; border-radius: 9px; border: none;
+    background: #1B3A5C; color: #fff; cursor: pointer;
+  }
+  .ped-ok:hover { background: #24507e; }
+  .ped-ok:disabled { opacity: 0.6; cursor: default; }
+  @media (max-width: 560px) {
+    .ped-grid, .ped-opts { grid-template-columns: 1fr; }
+  }
+
+  </style>
 </head>
 <body>
 
@@ -514,6 +1208,18 @@
       <button class="sb-lang-btn" data-lang="pt" onclick="setLang('pt')"><span class="flag">🇧🇷</span> PT</button>
       <button class="sb-lang-btn" data-lang="en" onclick="setLang('en')"><span class="flag">🇺🇸</span> EN</button>
       <button class="sb-lang-btn" data-lang="es" onclick="setLang('es')"><span class="flag">🇦🇷</span> ES</button>
+    </div>
+    <!-- ICMS selector -->
+    <div class="sb-icms">
+      <div class="sb-icms-title">Tabela de Preços</div>
+      <div class="sb-icms-btns">
+        <button class="sb-icms-btn active" data-icms="p18"   onclick="setIcms('p18',this)">ICMS 18%</button>
+        <button class="sb-icms-btn"        data-icms="p12rs" onclick="setIcms('p12rs',this)">12% RS</button>
+        <button class="sb-icms-btn"        data-icms="p12"   onclick="setIcms('p12',this)">12% SC/PR/SP</button>
+        <button class="sb-icms-btn"        data-icms="p7"   onclick="setIcms('p7',this)">ICMS 7%</button>
+        <button class="sb-icms-btn expind" data-icms="expind" onclick="setIcms('expind',this)">EXP-IND &middot; Exporta&ccedil;&atilde;o Indireta</button>
+      </div>
+      <div class="sb-expind-note">Tabela de <b>exporta&ccedil;&atilde;o indireta</b>. Produtos <b>importados</b> t&ecirc;m carga tribut&aacute;ria diferente &mdash; confira antes de fechar o pedido.</div>
     </div>
 
     <a href="sumario.html" class="sb-back">
@@ -667,6 +1373,15 @@
     <div id="sbSearchResults" class="sb-search-results"></div>
   </div>
 
+
+  <!-- ===== PDF DO CATÁLOGO COMPLETO ===== -->
+  <div class="btn-print-wrap">
+    <button class="btn-print" onclick="XalingoPDF.abrir()" title="Gera um PDF único com as 7 categorias, capa e sumário">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+      <span data-i18n="pdfCompleto">Catálogo completo em PDF</span>
+    </button>
+  </div>
+
 </aside>
 
 <!-- ===== MAIN CONTENT ===== -->
@@ -784,10 +1499,10 @@
     [68210,'BL CRIATIVOS - 150 PÇS',19,'B'],
     [15332,'BL CRIATIVOS - 300 PÇS',19,'B'],
     [20165,'BRINCANDO DE ENGENHEIRO 70 ANOS',19,'B'],
-    [28398,'BL SUPER MÁQUINA NA PISTA - CARROS ESPORTIVOS - DISPLAY 8 UN 143 - 155 PÇS',19,'B'],
-    [28409,'BL SUPER MÁQUINA NA PISTA - CARROS DE CORRIDA - DISPLAY 8 UN 184 - 186 PÇS',19,'B'],
+    [28398,'BL SUPER MÁQUINA NA PISTA - CARROS ESPORTIVOS - DISPLAY 8 UN 143 - 155 PÇS',27,'B'],
+    [28409,'BL SUPER MÁQUINA NA PISTA - CARROS DE CORRIDA - DISPLAY 8 UN 184 - 186 PÇS',27,'B'],
     [68221,'BL CRIATIVOS - 400 PÇS',20,'B'],
-    [15243,'BL SUPER MÁQUINA - LANÇADOR DE CARROS DISPLAY 8 UN - 70 PÇS',20,'B'],
+    [15243,'BL SUPER MÁQUINA - LANÇADOR DE CARROS DISPLAY 8 UN - 70 PÇS',28,'B'],
     [17943,'BL CRIATIVOS - 800 PÇS',20,'B'],
     [16365,'BL CRIATIVOS - MAPA DO MUNDO - 684 PÇS',21,'B'],
     [15965,'BL CRIATIVOS - HALLOWEEN - 225 PÇS',22,'B'],
@@ -979,7 +1694,8 @@
     [60598,'JOGO DE TABULEIRO CORRE PIRATA',126,'J'],
     [60576,'JOGO DE TABULEIRO PANGEIA',126,'J'],
     [12732,'JOGO DE TABULEIRO CAMPOS DA FORTUNA',127,'J'],
-    [12810,'JOGO DE TABULEIRO PISANDO FUNDO',127,'J'],
+    [60565,'JOGO DE TABULEIRO XALINGÓPOLIS',127,'J'],
+    [12810,'JOGO DE TABULEIRO PISANDO FUNDO',128,'J'],
     [6419,'COZINHA PETIT CHEF',130,'F'],
     [12954,'REFRIGERADOR PETIT CHEF',130,'F'],
     [11753,'MINI CHURRASQUEIRA COM SOM',131,'F'],
@@ -1012,6 +1728,7 @@
     [7675,'TRICICLO BABY RACER - C/ EMPURRADOR',142,'R'],
     [20432,'TABELA DE BASQUETE PLAY',144,'S'],
     [28665,'BOLA DE BASQUETE OFICIAL N 7 - COLORIDA',145,'S'],
+    [28676,'BOLA DE BASQUETE OFICIAL N 7 - LARANJA',145,'S'],
     [67032,'TABELA DE BASQUETE',145,'S'],
     [7209,'JOGO DE BOTÕES BRASILEIRÃO',146,'S'],
     [67109,'MESA PARA JOGO DE BOTÃO COM MARCADOR',146,'S'],
@@ -1197,7 +1914,1876 @@
   })();
 
   setLang(currentLang);
+
+
+  let currentIcms = (localStorage.getItem('xalingo-expind') === '1')
+    ? 'expind'
+    : (localStorage.getItem('xalingo-icms') || 'p18');
+
+  // Guarda a escolha de tabela. EXP-IND vai numa chave separada para nao quebrar
+  // paginas antigas que so entendem p18/p12rs/p12/p7.
+  function saveTabela(key) {
+    if (key === 'expind') {
+      localStorage.setItem('xalingo-expind', '1');
+    } else {
+      localStorage.setItem('xalingo-expind', '0');
+      localStorage.setItem('xalingo-icms', key);
+    }
+  }
+  function applyExpIndMode(key) {
+    if (document.body) document.body.classList.toggle('expind-mode', key === 'expind');
+  }
+  function setIcms(key, btn) {
+    currentIcms = key;
+    osIcms = key;
+    saveTabela(key);
+    applyExpIndMode(key);
+    document.querySelectorAll('.os-icms-btn').forEach(b =>
+      b.classList.toggle('active', b.getAttribute('data-icms') === key));
+    if (typeof renderOrder === 'function') renderOrder();
+    document.querySelectorAll('.sb-icms-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-icms') === key));
+    refreshBadges(key);
+  }
+  function applyIcmsOnLoad() {
+    document.querySelectorAll('.sb-icms-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-icms') === currentIcms));
+  }
+
+    const PRICE_CONFIG = {
+    // ─── fazdeconta-p3 (pág 130) ───
+    '6419': { img:'fazdeconta-p2', x:4, y:60, p18:104.3, p12rs:99, p12:99, p7:94.5, expind:38, cx:1, estoque:85, disponivel:1085, origem:'NAC', nome:'COZINHA PETIT CHEF', ean:'7896640483807', dun:'17896640483804' },
+    '12954': { img:'fazdeconta-p2', x:4, y:15, p18:136.9, p12rs:130, p12:130, p7:124.2, expind:50, cx:1, estoque:68, disponivel:368, origem:'NAC', nome:'REFRIGERADOR PETIT CHEF', ean:'7896640489724', dun:'17896640489721' },
+    // ─── fazdeconta-p4 (pág 131) ───
+    '11753': { img:'fazdeconta-p3', x:85, y:40, p18:89, p12rs:95.9, p12:89, p7:89, expind:45, cx:6, estoque:151, disponivel:151, origem:'IMP', nome:'MINI CHURRASQUEIRA COM SOM', ean:'7896640412302', dun:'17896640412309' },
+    '11750': { img:'fazdeconta-p3', x:85, y:10, p18:104, p12rs:112, p12:104, p7:104, expind:52, cx:6, estoque:995, disponivel:995, origem:'IMP', nome:'CAFETEIRA 3 EM 1 COM SOM', ean:'7896640412289', dun:'17896640412286' },
+    '62110': { img:'fazdeconta-p3', x:85, y:70, p18:168, p12rs:180.9, p12:168, p7:168, expind:84, cx:6, estoque:812, disponivel:812, nome:'CONJUNTO DE ESTAÇÃO DE SUPERMERCADO COM LUZ E SOM', ean:'7896640412272', dun:'17896640412279' },
+    // ─── fazdeconta-p5 (pág 132) ───
+    '6000': { img:'fazdeconta-p4', x:4, y:15, p18:146, p12rs:157.2, p12:146, p7:146, expind:73, cx:6, estoque:1210, disponivel:1210, origem:'IMP', nome:'BRINCANDO DE VETERINÁRIO', ean:'7896640412371', dun:'17896640412378' },
+    '4160': { img:'fazdeconta-p5', x:4, y:60, p18:162, p12rs:174.5, p12:162, p7:162, expind:81, cx:6, estoque:1377, disponivel:1377, origem:'IMP', nome:'PLAYSET ESPACIAL FOGUETE', ean:'7896640434717', dun:'17896640434714' },
+    '55025': { img:'fazdeconta-p5', x:4, y:15, p18:141.0, p12rs:153.0, p12:141.0, p7:145.0, expind:0, cx:6, estoque:418, disponivel:418, origem:'IMP', nome:'MALETA DE FERRAMENTAS COM PARAFUSADEIRA', ean:'7896640412333', dun:'17896640412330' },
+    '22407': { img:'fazdeconta-p4', x:80, y:55, p18:188.0, p12rs:214.0, p12:188.0, p7:188.0, expind:0, cx:6, estoque:2, disponivel:2, origem:'IMP', nome:'MINHA PRIMEIRA VIAGEM DE IATE E HELICÓPTERO', ean:'7896640412203', dun:'17896640412200' },
+    // ─── fazdeconta-p6 (pág 133) ───
+    '2921': { img:'fazdeconta-p6', x:4, y:75, p18:21, p12rs:19.9, p12:19.95, p7:19.06, expind:8, cx:6, estoque:2766, disponivel:2766, origem:'NAC', nome:'SHOW DE MÁGICAS - 8 MÁGICAS', ean:'7896640402921', dun:'17896640402928' },
+    '68498': { img:'fazdeconta-p6', x:80, y:75, p18:45.8, p12rs:49.3, p12:45.8, p7:45.8, expind:23, cx:2, estoque:5068, disponivel:5068, origem:'IMP', nome:'KIT MÁGICA COM CARTOLA - 35 TRUQUES', ean:'7896640411312', dun:'17896640411319' },
+    '6618': { img:'fazdeconta-p6', x:20, y:30, p18:29.0, p12rs:33.1, p12:29.0, p7:29.0, expind:0, cx:12, pedido_min:12, estoque:0, disponivel:0, origem:'IMP', nome:'MINI PROJETORES DINOS - DISPLAY 12 UNID.', ean:'7896640412418', dun:'17896640412415' },
+    // ─── fazdeconta-p7 (pág 134) ───
+    '95960': { img:'fazdeconta-p7', x:4, y:15, p18:248, p12rs:267.1, p12:248, p7:248, expind:124, cx:6, estoque:374, disponivel:374, origem:'IMP', nome:'MESA DE AGUA ÁRVORE DIVERTIDA', ean:'7896640412500', dun:'17896640412507' },
+    // ─── fazdeconta-p8 (pág 135) ───
+    '93945': { img:'fazdeconta-p8', x:4, y:60, p18:78.9, p12rs:85.8, p12:78.9, p7:81.2, expind:0, cx:6, estoque:320, disponivel:320, origem:'IMP', nome:'MOCHILINHA DE PRAIA', ean:'7896640412517', dun:'17896640412514' },
+    '62554': { img:'fazdeconta-p8', x:4, y:15, p18:170, p12rs:183, p12:170, p7:170, expind:85, cx:6, estoque:542, disponivel:542, origem:'IMP', nome:'MESA DE ÁGUA AREIA PLAY', ean:'7896640412487', dun:'17896640412484' },
+  };
+
+  // Refs sem selo de preço/compra (somem do catálogo, do Excel e do PDF)
+  const REFS_OCULTAS = new Set(['55025', '93945']);
+
+  // Refs indisponíveis: véu branco + rótulo sobre a área do produto.
+  // top/left/width/height/textoY em % da PÁGINA (bloco de cima 0–50, de baixo 50–100)
+  const REFS_INDISPONIVEIS = {
+    '93945': { img:'fazdeconta-p8', top:50, left:0, width:94, height:50, textoY:72, texto:'Indisponível no momento' }
+  };
+
+  function renderVeils() {
+    Object.entries(REFS_INDISPONIVEIS).forEach(([ref, v]) => {
+      const img = document.querySelector(`img[src*="${v.img}"]`);
+      if (!img) return;
+      let wrap = img.parentElement;
+      if (!wrap.classList.contains('page-wrap')) {
+        const newWrap = document.createElement('div');
+        newWrap.className = 'page-wrap';
+        img.parentNode.insertBefore(newWrap, img);
+        newWrap.appendChild(img);
+        wrap = newWrap;
+      }
+      if (wrap.querySelector(`.page-veil[data-ref="${ref}"]`)) return;
+      const veu = document.createElement('div');
+      veu.className = 'page-veil';
+      veu.dataset.ref = ref;
+      veu.style.top = v.top + '%';
+      veu.style.left = v.left + '%';
+      veu.style.width = v.width + '%';
+      veu.style.height = v.height + '%';
+      // posição e tamanho do rótulo são dados em % da página → convertidos para o véu
+      veu.style.setProperty('--rotulo-y', ((v.textoY - v.top) / v.height * 100) + '%');
+      veu.style.setProperty('--rotulo-fs', (2.45 / v.width * 100) + 'cqw');
+      const lbl = document.createElement('div');
+      lbl.className = 'page-veil-label';
+      lbl.textContent = v.texto || 'Indisponível no momento';
+      veu.appendChild(lbl);
+      wrap.appendChild(veu);
+    });
+  }
+
+  function renderPriceBadges() {
+    Object.entries(PRICE_CONFIG).forEach(([ref, d]) => {
+      if (REFS_OCULTAS.has(ref)) return;
+      const img = document.querySelector(`img[src*="${d.img}"]`);
+      if (!img) return;
+      let wrap = img.parentElement;
+      if (!wrap.classList.contains('page-wrap')) {
+        const newWrap = document.createElement('div');
+        newWrap.className = 'page-wrap';
+        img.parentNode.insertBefore(newWrap, img);
+        newWrap.appendChild(img);
+        wrap = newWrap;
+      }
+      const badge = document.createElement('div');
+      badge.className = 'price-badge';
+      badge.style.left = d.x + '%';
+      badge.style.top  = d.y + '%';
+      badge.dataset.ref = ref;
+      badge.dataset.orig = d.origem || 'IMP';
+      d.ref = ref;
+      const fmtPrice = v => v > 0 ? 'R$ ' + v.toFixed(2).replace('.',',') : (currentIcms === 'expind' ? 'Sob consulta' : 'Aguardar');
+      badge.innerHTML = `<div class="price-tag"><div class="price-ref">${ref}</div><div class="price-main">${badgeMainHTML(ref, d, currentIcms)}</div></div><button class="badge-info-btn" title="Ver detalhes">ⓘ</button>`;
+      badge.querySelector('.price-tag').addEventListener('click', (e) => { e.stopPropagation(); toggleProduct(ref); });
+      badge.querySelector('.badge-info-btn').addEventListener('click', (e) => { e.stopPropagation(); openPriceModal(ref, d); });
+      wrap.appendChild(badge);
+    });
+  }
+
+  function openPriceModal(ref, d) {
+    const fmtPrice = v => v > 0 ? 'R$ ' + v.toFixed(2).replace('.',',') : (currentIcms === 'expind' ? 'Sob consulta' : 'Aguardar');
+    const stockClass = d.estoque > 0 ? 'pm-stock-ok' : 'pm-stock-zero';
+    const stockLabel = d.estoque > 0 ? d.estoque + ' un.' : 'Sem estoque';
+    const dispClass  = d.disponivel > 0 ? 'pm-stock-ok' : 'pm-stock-zero';
+    const launch = d.lancamento ? `<div class="pm-launch">🚀 Previsão: ${d.lancamento}</div>` : '';
+    document.getElementById('pmContent').innerHTML = `
+      <div class="pm-ref">REF ${ref}</div>
+      <div class="pm-nome">${d.nome}</div>
+      ${(currentIcms === 'expind' && (d.origem||'IMP') === 'IMP')
+        ? '<div class="pm-imp-note">&#9888;&#65039; Produto <b>importado</b> &mdash; na tabela EXP-IND a carga tribut&aacute;ria &eacute; diferente da dos produtos nacionais. Confirme os impostos antes de faturar.</div>'
+        : ''}
+      <div class="pm-prices">
+        <div class="pm-price-box"><div class="pm-price-label">ICMS 18%</div><div class="pm-price-val">${fmtPrice(d.p18)}</div></div>
+        <div class="pm-price-box"><div class="pm-price-label">ICMS 12% RS</div><div class="pm-price-val">${fmtPrice(d.p12rs)}</div></div>
+        <div class="pm-price-box"><div class="pm-price-label">ICMS 12% SC/PR/SP/RJ/MG</div><div class="pm-price-val">${fmtPrice(d.p12)}</div></div>
+        <div class="pm-price-box"><div class="pm-price-label">ICMS 7%</div><div class="pm-price-val">${fmtPrice(d.p7)}</div></div>
+        <div class="pm-price-box pm-expind"><div class="pm-price-label">EXP-IND &middot; Exporta&ccedil;&atilde;o Indireta</div><div class="pm-price-val">${fmtPrice(d.expind)}</div></div>
+      </div>
+      <div class="pm-info">
+        <div class="pm-info-item">CX: <span>${d.cx} un.</span></div>
+        <div class="pm-info-item">Estoque: <span class="${stockClass}">${stockLabel}</span></div>
+        <div class="pm-info-item">Disponível mar: <span class="${dispClass}">${d.disponivel} un.</span></div>
+      </div>
+      <div class="pm-ean">EAN: ${d.ean}<br>DUN: ${d.dun}</div>
+      ${launch}`;
+    document.getElementById('priceModal').classList.add('open');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderPriceBadges();
+    renderVeils();
+    applyIcmsOnLoad();
+  applyExpIndMode(currentIcms);
+  document.addEventListener('DOMContentLoaded', () => applyExpIndMode(currentIcms));
+    // Restore cart from localStorage
+    loadCart();
+    if (Object.keys(osCart).length) {
+      updateToggleBadge();
+      renderOrder();
+      Object.keys(osCart).forEach(ref => {
+        document.querySelectorAll(`.price-badge[data-ref="${ref}"]`).forEach(b => b.classList.add('selected'));
+      });
+    }
+  });
+
+  // ── PRODUCT_URLS (preencher quando links disponíveis) ─────────────────────
+  const PRODUCT_URLS = {
+    '12954':'https://produtosxalingo.oneweb.com.br/2023/12/27/refrigerador-petit-chef/',
+    '6419':'https://produtosxalingo.oneweb.com.br/2023/01/20/cozinha-petit-chef/',
+    '11750':'https://produtosxalingo.oneweb.com.br/2024/05/16/cafeteira-3-em-1-com-som-48-pecas/',
+    '11753':'https://produtosxalingo.oneweb.com.br/2024/05/16/mini-churrasqueira-com-som-65-pecas/',
+    '62110':'https://produtosxalingo.oneweb.com.br/2024/05/16/supermercado-com-luz-e-som/',
+    '6000':'https://produtosxalingo.oneweb.com.br/2024/05/16/brincando-de-veterinario/',
+    '22407':'https://produtosxalingo.oneweb.com.br/2024/05/16/minha-primeira-viagem-de-iate-e-helicoptero/',
+    '55025':'https://produtosxalingo.oneweb.com.br/2024/05/16/maleta-de-ferramentas-com-parafusadeira/',
+    '4160':'https://produtosxalingo.oneweb.com.br/2024/05/16/playset-espacial-foguete/',
+    '6618':'https://produtosxalingo.oneweb.com.br/2024/05/16/mini-projetores-dinos-display-com-12-unidades/',
+    '2921':'https://produtosxalingo.oneweb.com.br/2023/01/20/show-de-magica/',
+    '68498':'https://produtosxalingo.oneweb.com.br/2024/01/29/kit-magica-com-chapeu/',
+    '95960':'https://produtosxalingo.oneweb.com.br/2024/05/16/mesa-de-agua-arvore-divertida/',
+    '62554':'https://produtosxalingo.oneweb.com.br/2024/05/16/mesa-de-agua-e-areia-play/',
+    '93945':'https://produtosxalingo.oneweb.com.br/2024/05/16/mochilinha-de-praia/',
+  };
+
+  const WP_API = 'https://produtosxalingo.oneweb.com.br/wp-json/wp/v2';
+
+  function _extractImg(html) {
+    if (!html) return null;
+    for (const attr of ['src','data-src','data-lazy-src','data-original']) {
+      const m = html.match(new RegExp('<img[^>]+' + attr + '=["\']([^"\']*wp-content[^"\']+)["\']','i'));
+      if (m && m[1].startsWith('http')) return m[1];
+    }
+    const m2 = html.match(/https?:\/\/[^"'\s<>]+wp-content\/uploads\/[^"'\s<>]+\.(?:jpg|jpeg|png|webp)/i);
+    return m2 ? m2[0] : null;
+  }
+
+  function _tryLoad(src) {
+    return new Promise(res => {
+      const img = new Image();
+      img.onload  = () => res(src);
+      img.onerror = () => res(null);
+      img.src = src;
+    });
+  }
+
+  async function resolveImgUrl(slug) {
+    try {
+      const res  = await fetch(WP_API + '/posts?slug=' + slug + '&_embed=1&_fields=id,content,_links,_embedded', { signal: AbortSignal.timeout(8000) });
+      const data = await res.json();
+      const post = data[0];
+      if (!post) return '';
+      // Prefer thumbnail size (150px) to keep PDF weight low
+      const featMedia = post?._embedded?.['wp:featuredmedia']?.[0];
+      const feat = featMedia?.media_details?.sizes?.thumbnail?.source_url
+                || featMedia?.media_details?.sizes?.medium?.source_url
+                || featMedia?.source_url;
+      if (feat && await _tryLoad(feat)) return feat;
+      const fromContent = _extractImg(post?.content?.rendered || '');
+      if (fromContent && await _tryLoad(fromContent)) return fromContent;
+      const mRes   = await fetch(WP_API + '/media?parent=' + post.id + '&per_page=4&_fields=source_url,media_details', { signal: AbortSignal.timeout(8000) });
+      const medias = await mRes.json();
+      for (const m of medias) {
+        const src = m?.media_details?.sizes?.thumbnail?.source_url
+                 || m?.media_details?.sizes?.medium?.source_url
+                 || m?.source_url;
+        if (src && await _tryLoad(src)) return src;
+      }
+    } catch(e) { /* silencioso */ }
+    return '';
+  }
+
+  // ── ORDER SIDEBAR ──────────────────────────────────────────────────────────
+  let osIcms = (localStorage.getItem('xalingo-expind') === '1')
+    ? 'expind'
+    : (localStorage.getItem('xalingo-icms') || 'p18');
+  const osCart = {};     // ref -> {data, qty, ovr, ovrMode}
+  const imgCache = {};   // ref -> imageUrl (pre-fetched em background)
+  // ── Cart persisted across pages via localStorage ──────────────────────────
+  const CART_KEY = 'xalingo-cart';
+  function saveCart() {
+    try {
+      const slim = {};
+      Object.keys(osCart).forEach(ref => {
+        slim[ref] = { qty: osCart[ref].qty, data: osCart[ref].data, img: imgCache[ref] || null,
+                      ovr: osCart[ref].ovr || null, ovrMode: osCart[ref].ovrMode || null };
+      });
+      localStorage.setItem(CART_KEY, JSON.stringify(slim));
+    } catch(e){}
+  }
+  function loadCart() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(CART_KEY) || '{}');
+      Object.keys(saved).forEach(ref => {
+        const item = saved[ref];
+        if (!item || !item.data) return;
+        if (REFS_OCULTAS.has(ref)) return; // ocultas/indisponíveis saem do pedido salvo
+        // Use live PRICE_CONFIG data if available (same page), else use saved data
+        const d = PRICE_CONFIG[ref] || item.data;
+        d.ref = ref;
+        // Ensure is_lanc is set from lancamento if missing
+        if (d.lancamento && d.is_lanc === undefined) d.is_lanc = true;
+        if (!d.origem) d.origem = 'IMP';
+        if (!d.pedido_min) d.pedido_min = 1;
+        osCart[ref] = { data: d, qty: item.qty || 1, ovr: item.ovr || null, ovrMode: item.ovrMode || null };
+        // Restore cached image URL
+        if (item.img) imgCache[ref] = item.img;
+      });
+    } catch(e){}
+  }
+
+  const ICMS_NAMES = {p18:'ICMS 18%',p12rs:'ICMS 12% RS',p12:'ICMS 12% SC/PR/SP/RJ/MG',p7:'ICMS 7%',expind:'EXP-IND \u00b7 Exporta\u00e7\u00e3o Indireta'};
+
+  function setOsIcms(btn, key) {
+    osIcms = key;
+    saveTabela(key);
+    applyExpIndMode(key);
+    document.querySelectorAll('.os-icms-btn').forEach(b => b.classList.toggle('active', b===btn));
+    // Sync with main ICMS selector
+    currentIcms = key;
+    document.querySelectorAll('.sb-icms-btn').forEach(b =>
+      b.classList.toggle('active', b.getAttribute('data-icms') === key));
+    // Update all badges
+    refreshBadges(key);
+    renderOrder();
+  }
+
+  function toggleOrderSidebar() {
+    document.getElementById('orderSidebar').classList.toggle('open');
+    document.getElementById('orderOverlay').classList.toggle('open');
+  }
+
+  function toggleProduct(ref) {
+    if (osCart[ref]) {
+      delete osCart[ref];
+      document.querySelectorAll(`.price-badge[data-ref="${ref}"]`).forEach(b => b.classList.remove('selected'));
+    } else {
+      const d = PRICE_CONFIG[ref];
+      if (!d) return;
+      const pm = d.pedido_min || 1;
+      osCart[ref] = { data: d, qty: pm, ovr: null, ovrMode: 'val' };
+      document.querySelectorAll(`.price-badge[data-ref="${ref}"]`).forEach(b => b.classList.add('selected'));
+      // Pré-busca imagem em background — nunca bloqueia o render
+      if (!(ref in imgCache)) {
+        imgCache[ref] = null;
+        const pageUrl = (typeof PRODUCT_URLS !== 'undefined' && PRODUCT_URLS[ref]) || '';
+        if (pageUrl) {
+          const slug = pageUrl.replace(/\/$/, '').split('/').pop();
+          resolveImgUrl(slug).then(url => {
+            imgCache[ref] = url || '';
+            renderOrder();
+            saveCart();
+          }).catch(() => { imgCache[ref] = ''; saveCart(); });
+        } else {
+          imgCache[ref] = '';
+        }
+      }
+    }
+    updateToggleBadge();
+    renderOrder();
+    saveCart();
+  }
+
+  function updateToggleBadge() {
+    const n = Object.keys(osCart).length;
+    document.getElementById('orderToggleBadge').textContent = n;
+    document.getElementById('osSubtitle').textContent =
+      n === 0 ? 'Nenhum produto selecionado' : `${n} produto${n>1?'s':''} selecionado${n>1?'s':''}`;
+  }
+
+  function setOrderQty(ref, val) {
+    const n = parseInt(val);
+    if (!osCart[ref] || isNaN(n) || n < 1) return;
+    const pm = osCart[ref].data.pedido_min || 1;
+    // Round up to nearest multiple of pedido_min
+    osCart[ref].qty = Math.max(pm, Math.ceil(n / pm) * pm);
+    renderOrder(); saveCart();
+  }
+
+  function changeOrderQty(ref, delta) {
+    if (!osCart[ref]) return;
+    const pm = osCart[ref].data.pedido_min || 1;
+    const current = osCart[ref].qty;
+    const next = current + (delta > 0 ? pm : -pm);
+    osCart[ref].qty = Math.max(pm, next);
+    renderOrder(); saveCart();
+  }
+
+  function clearOrder() {
+    Object.keys(osCart).forEach(ref => {
+      delete osCart[ref];
+      document.querySelectorAll(`.price-badge[data-ref="${ref}"]`).forEach(b => b.classList.remove('selected'));
+    });
+    updateToggleBadge();
+    renderOrder();
+    saveCart();
+  }
+
+  function fmtMoney(v) { return v > 0 ? 'R$ ' + v.toFixed(2).replace('.',',') : (currentIcms === 'expind' ? 'Sob consulta' : 'Aguardar'); }
+
+  function renderOrder() {
+    const body = document.getElementById('osBody');
+    const items = Object.values(osCart);
+    if (!items.length) {
+      body.innerHTML = '<div class="os-empty">Clique no preço de um produto no catálogo para adicioná-lo ao pedido</div>';
+      document.getElementById('osTotals').innerHTML = '';
+      return;
+    }
+
+    const linha = items.filter(i => !i.data.is_lanc && !i.data.lancamento);
+    const lanc  = items.filter(i =>  i.data.is_lanc ||  i.data.lancamento);
+
+    let html = '';
+
+    const renderItem = (item) => {
+      const d = item.data;
+      const priceOrig = d[osIcms] || 0;
+      const price = itemUnitPrice(item);
+      const ovr = (item.ovr && item.ovr.v > 0) ? item.ovr : null;
+      const ovrModo = ovr ? ovr.t : (item.ovrMode || 'val');
+      const belowMin = d.pedido_min > 1 && item.qty < d.pedido_min;
+      const estLabel = d.estoque > 0
+        ? `<span class="os-badge est-ok">Est: ${d.estoque}</span>`
+        : `<span class="os-badge est-zero">Sem estoque</span>`;
+      const lancDate = d.lancamento
+        ? `<span class="os-badge lanc-date">🚀 ${d.lancamento}</span>` : '';
+      const warnMin = belowMin
+        ? `<div class="os-warn">⚠️ Ped. mín: ${d.pedido_min} un.</div>` : '';
+      const ref = d.ref || item.data.ref || '';
+      const ovrBadge = !ovr ? '' :
+        ('<span class="os-badge ovr">' + (ovr.t === 'pct' ? '\u2605 -' + ovr.v + '%' : '\u2605 Pre\u00e7o manual') + '</span>' +
+         (ovr.t === 'val' && ovr.icms && ovr.icms !== osIcms
+           ? '<span class="os-badge ovr-warn">definido em ' + (ICMS_NAMES[ovr.icms] || ovr.icms) + '</span>' : ''));
+
+      const ovrHtml = !discountUnlocked ? '' : `
+            <div class="os-ovr">
+              <div class="os-ovr-row">
+                <span class="os-ovr-lbl">Preço especial</span>
+                <div class="os-ovr-mode">
+                  <button class="${ovrModo==='val'?'active':''}" onclick="setItemOvrMode('${ref}','val')" title="Informar o valor unitário">R$</button>
+                  <button class="${ovrModo==='pct'?'active':''}" onclick="setItemOvrMode('${ref}','pct')" title="Informar o % de desconto sobre a tabela">%</button>
+                </div>
+                <input class="os-ovr-input" type="number" min="0" step="${ovrModo==='pct'?'0.5':'0.01'}"
+                  placeholder="${ovrModo==='pct'?'0,0 %':'0,00'}" value="${ovr ? ovr.v : ''}"
+                  onchange="setItemOvrValor('${ref}', this.value)"
+                  onkeydown="if(event.key==='Enter')this.blur()">
+                ${ovr ? `<span class="os-ovr-res">= ${fmtMoney(price)}</span>
+                <button class="os-ovr-clear" onclick="clearItemOvr('${ref}')" title="Voltar ao preço de tabela">✕</button>` : ''}
+              </div>
+            </div>`;
+      const cachedImg = imgCache[ref];
+      const thumbHtml = cachedImg
+        ? `<img class="os-item-thumb" src="${cachedImg}" alt="">`
+        : `<div class="os-item-thumb-empty"></div>`;
+      return `
+        <div class="os-item${d.is_lanc?' is-lanc':''}${ovr?' has-ovr':''}">
+          ${thumbHtml}
+          <div class="os-item-left">
+            <div class="os-ref">REF ${ref}</div>
+            <div class="os-nome" title="${d.nome}">${d.nome}</div>
+            <div class="os-price">${priceOrig > 0 && price < priceOrig - 0.005 ? '<span style="text-decoration:line-through;opacity:0.35;font-size:0.75rem;font-weight:400;margin-right:3px">R$ ' + priceOrig.toFixed(2).replace('.',',') + '</span> ' : ''}${fmtMoney(price)} <span style="font-size:0.68rem;color:#999">× ${item.qty} = ${fmtMoney(price*item.qty)}</span></div>
+            <div class="os-meta">
+              <span class="os-badge ${(d.origem||'IMP')==='NAC'?'nac':'imp'}">${d.origem||'IMP'}</span>
+              <span class="os-badge">CX: ${d.cx}</span>
+              ${d.pedido_min>1?`<span class="os-badge" style="background:#fff0cc;color:#8a5000">Mín: ${d.pedido_min}</span>`:''}
+              ${estLabel}${lancDate}${ovrBadge}
+            </div>
+            ${warnMin}${(osIcms === 'expind' && (d.origem||'IMP') === 'IMP')
+              ? '<div class="os-warn-imp">&#9888;&#65039; Importado &mdash; carga tribut&aacute;ria diferente na exporta&ccedil;&atilde;o indireta</div>'
+              : ''}
+            ${ovrHtml}
+          </div>
+          <div class="os-item-right">
+            <div class="os-qty-row">
+              <button class="os-qty-btn" onclick="changeOrderQty('${ref}', -1)">−</button>
+              <input class="os-qty-input" type="number" value="${item.qty}" min="1" onchange="setOrderQty('${ref}', this.value)">
+              <button class="os-qty-btn" onclick="changeOrderQty('${ref}', 1)">+</button>
+            </div>
+            <button class="os-del" onclick="toggleProduct('${ref}')">✕ remover</button>
+          </div>
+        </div>`;
+    };
+
+    if (linha.length) {
+      const subLinha = linha.reduce((s,i)=>s+itemUnitPrice(i)*i.qty,0);
+      html += `<div class="os-section-label">Linha <span class="os-section-sub">${fmtMoney(subLinha)}</span></div>`;
+      html += linha.map(renderItem).join('');
+    }
+
+    if (lanc.length) {
+      const subLanc = lanc.reduce((s,i)=>s+itemUnitPrice(i)*i.qty,0);
+      html += `<div class="os-section-label" style="margin-top:10px">Lançamentos <span class="os-section-sub">${fmtMoney(subLanc)}</span></div>`;
+      html += lanc.map(renderItem).join('');
+    }
+
+    body.innerHTML = html;
+
+    // Totals
+    const totalLinha = linha.reduce((s,i)=>s+itemUnitPrice(i)*i.qty,0);
+    const totalLanc  = lanc.reduce((s,i)=>s+itemUnitPrice(i)*i.qty,0);
+    const totalQtd   = items.reduce((s,i)=>s+i.qty,0);
+    const totalGeral = totalLinha + totalLanc;
+
+    let totHtml = '';
+    if (linha.length) totHtml += `<div class="os-total-row"><span class="lbl">Subtotal linha</span><span class="val">${fmtMoney(totalLinha)}</span></div>`;
+    if (lanc.length)  totHtml += `<div class="os-total-row"><span class="lbl">Subtotal lançamentos</span><span class="val">${fmtMoney(totalLanc)}</span></div>`;
+    totHtml += `<div class="os-total-row"><span class="lbl">Qtd total</span><span class="val">${totalQtd} un.</span></div>`;
+    totHtml += `<div class="os-total-row os-total-main"><span class="lbl" style="font-weight:700">TOTAL GERAL</span><span class="val">${fmtMoney(totalGeral)}</span></div>`;
+    const totalOrigLinha = linha.reduce((s,i)=>s+(i.data[osIcms]||0)*i.qty,0);
+    const totalOrigLanc  = lanc.reduce((s,i)=>s+(i.data[osIcms]||0)*i.qty,0);
+    const economia = (totalOrigLinha + totalOrigLanc) - totalGeral;
+    if (economia > 0.005) {
+      const nOvr = countOvr();
+      const rotEcon = nOvr
+        ? ('Economia' + (globalDiscount > 0 ? ' (' + globalDiscount + '% + ' + nOvr + ' pre\u00e7o' + (nOvr>1?'s':'') + ' especial' + (nOvr>1?'is':'') + ')' : ' (' + nOvr + ' pre\u00e7o' + (nOvr>1?'s':'') + ' especial' + (nOvr>1?'is':'') + ')'))
+        : ('Economia (' + globalDiscount + '%)');
+      totHtml += `<div class="os-total-row" style="color:#0E8A5F;border-top:1px dashed rgba(14,138,95,0.3);margin-top:4px;padding-top:4px"><span class="lbl">🏷️ ${rotEcon}</span><span class="val">- ${fmtMoney(economia)}</span></div>`;
+    }
+    document.getElementById('osTotals').innerHTML = totHtml;
+  }
+
+  // ── PEDIDO: modal de dados antes de gerar o PDF ───────────────────────────
+  const PED_KEY = 'xalingo-pedido-cfg';
+  const PED_TEXTOS = ['pedCliente','pedCnpj','pedCidade','pedContato','pedVendedor',
+                      'pedNum','pedData','pedPgto','pedFrete','pedTransp','pedPrevisao',
+                      'pedValidade','pedObs'];
+  // padrão = o documento que o pedido já gerava antes
+  const PED_CHECKS = {
+    pedFotos: true,  pedDePor: true,   pedDesc: false,  pedEspecial: false,
+    pedOrigem: true, pedCx: true,      pedMin: true,    pedEstoque: false,
+    pedEan: false,   pedEntrega: true, pedResumo: true, pedAssinatura: false
+  };
+
+  function pedCfgLer() {
+    try { return JSON.parse(localStorage.getItem(PED_KEY) || '{}'); } catch (e) { return {}; }
+  }
+  function pedCfgGravar(cfg) {
+    try { localStorage.setItem(PED_KEY, JSON.stringify(cfg)); } catch (e) {}
+  }
+  function pedLerForm() {
+    const cfg = {};
+    PED_TEXTOS.forEach(function (id) {
+      const el = document.getElementById(id);
+      cfg[id] = el ? String(el.value || '').trim() : '';
+    });
+    Object.keys(PED_CHECKS).forEach(function (id) {
+      const el = document.getElementById(id);
+      cfg[id] = el ? el.checked : PED_CHECKS[id];
+    });
+    return cfg;
+  }
+
+  // O botão "Gerar Pedido" agora abre o modal; o documento sai em gerarPedidoDoc()
+  function printOrder() {
+    const items = Object.values(osCart);
+    if (!items.length) { alert('Adicione produtos ao pedido primeiro.'); return; }
+    const cfg = pedCfgLer();
+    PED_TEXTOS.forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.value = cfg[id] || '';
+    });
+    Object.keys(PED_CHECKS).forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.checked = (cfg[id] === undefined) ? PED_CHECKS[id] : !!cfg[id];
+    });
+    const dt = document.getElementById('pedData');
+    if (dt) {
+      const hoje = new Date();
+      dt.value = new Date(hoje.getTime() - hoje.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    }
+    const res = document.getElementById('pedResumoItens');
+    if (res) {
+      const q = items.reduce(function (s, i) { return s + i.qty; }, 0);
+      const t = items.reduce(function (s, i) { return s + itemUnitPrice(i) * i.qty; }, 0);
+      const nOvr = countOvr();
+      res.textContent = items.length + ' produto(s) · ' + q + ' un. · ' + fmtMoney(t) +
+        ' · ' + ICMS_NAMES[osIcms] +
+        (globalDiscount > 0 ? ' · desconto ' + globalDiscount + '%' : '') +
+        (nOvr ? ' · ' + nOvr + ' preço(s) especial(is)' : '');
+    }
+    document.getElementById('pedidoModal').classList.add('open');
+  }
+
+  function fecharPedidoModal() {
+    document.getElementById('pedidoModal').classList.remove('open');
+  }
+
+  function pedObsSugestao(tipo) {
+    const t = document.getElementById('pedObs');
+    if (!t) return;
+    const val = document.getElementById('pedValidade');
+    const prev = document.getElementById('pedPrevisao');
+    const textos = {
+      validade:  'Proposta válida por ' + ((val && val.value.trim()) || '7 dias') + ', sujeita à confirmação de estoque.',
+      impostos:  'Preços na tabela ' + ICMS_NAMES[osIcms] + ', com os impostos já inclusos.',
+      entrega:   'Prazo de entrega ' + ((prev && prev.value.trim()) ? 'de ' + prev.value.trim() + ' ' : '') + 'após a confirmação do pedido.',
+      minimo:    'As quantidades seguem múltiplos do pedido mínimo de cada produto.',
+      frete:     'Frete por conta do cliente (FOB); transportadora a combinar.',
+      lancamento:'Itens de lançamento são faturados a partir da data prevista de entrega.',
+      troca:     'Avarias ou divergências devem ser comunicadas em até 7 dias após o recebimento.'
+    };
+    const txt = textos[tipo];
+    if (!txt || t.value.indexOf(txt) >= 0) return;
+    t.value = t.value.trim() ? t.value.trim() + '\n' + txt : txt;
+    t.scrollTop = t.scrollHeight;
+  }
+
+  async function gerarPedidoDoc(btn) {
+    const items = Object.values(osCart);
+    if (!items.length) { alert('Adicione produtos ao pedido primeiro.'); return; }
+    const cfg = pedLerForm();
+    pedCfgGravar(cfg);
+
+    const rotulo = btn ? btn.innerHTML : null;
+    if (cfg.pedFotos) {
+      // mesmo padrão do Excel: se faltar a URL de algum produto (veio de outra
+      // vertical), lê as outras páginas até achar antes de baixar as fotos
+      const urls = Object.assign({}, PRODUCT_URLS);
+      const falta = function () {
+        return items.some(function (i) {
+          const r = i.data.ref || '';
+          return r && !imgCache[r] && !urls[r];
+        });
+      };
+      if (falta()) {
+        if (btn) { btn.innerHTML = '🔗 Localizando as fotos…'; btn.disabled = true; }
+        const aqui = (location.pathname.split('/').pop() || '').toLowerCase();
+        const outras = XLS_CATEGORIAS.filter(function (c) { return c.arquivo.toLowerCase() !== aqui; });
+        for (let k = 0; k < outras.length; k++) {
+          if (!falta()) break;
+          try { Object.assign(urls, (await lerCategoriaXls(outras[k].arquivo)).urls); } catch (e) {}
+        }
+      }
+      const pendentes = items.filter(function (i) {
+        const r = i.data.ref || '';
+        return r && urls[r] && !imgCache[r];
+      });
+      if (pendentes.length) {
+        if (btn) { btn.innerHTML = '⏳ Buscando imagens…'; btn.disabled = true; }
+        await Promise.all(pendentes.map(async function (item) {
+          const r = item.data.ref || '';
+          const slug = (urls[r] || '').replace(/\/$/, '').split('/').pop();
+          try { imgCache[r] = await resolveImgUrl(slug); } catch (e) { imgCache[r] = ''; }
+        }));
+        saveCart();
+      }
+    }
+    if (btn) { btn.innerHTML = rotulo; btn.disabled = false; }
+    fecharPedidoModal();
+
+    const esc = function (t) {
+      return String(t == null ? '' : t)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    };
+    const linha = items.filter(function (i) { return !i.data.is_lanc && !i.data.lancamento; });
+    const lanc  = items.filter(function (i) { return  i.data.is_lanc ||  i.data.lancamento; });
+    const dataPed = cfg.pedData
+      ? cfg.pedData.split('-').reverse().join('/')
+      : new Date().toLocaleDateString('pt-BR');
+    const hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    const tdS = 'padding:6px 8px;border-bottom:1px solid #eee;font-size:0.8rem';
+    const thS = 'background:#1B3A5C;color:#fff;padding:7px 8px;font-size:0.78rem;font-weight:700';
+    let usouEstrela = false;
+
+    /* colunas conforme a seleção do modal */
+    const cols = [];
+    if (cfg.pedFotos) cols.push({ h: 'Foto', al: 'center', w: '62px', pad: '3px 6px', v: function (i) {
+      const src = imgCache[i.data.ref || ''] || '';
+      return src
+        ? '<img src="' + src + '" alt="" style="width:54px;height:54px;object-fit:contain;border-radius:5px;background:#f5f5f5;display:block;margin:0 auto">'
+        : '<div style="width:54px;height:54px;background:#eee;border-radius:5px;margin:0 auto"></div>';
+    } });
+    cols.push({ h: 'REF', v: function (i) { return esc(i.data.ref || ''); } });
+    cols.push({ h: 'Produto', al: 'left', v: function (i) { return esc(i.data.nome); } });
+    if (cfg.pedOrigem) cols.push({ h: 'Orig.', al: 'center', v: function (i) {
+      const nac = (i.data.origem || 'IMP') === 'NAC';
+      return '<span style="background:' + (nac ? '#e0f0e0' : '#dce8f5') + ';color:' + (nac ? '#2a6a2a' : '#1B3A5C') +
+             ';padding:1px 5px;border-radius:3px;font-weight:700;font-size:0.72rem">' + (i.data.origem || 'IMP') + '</span>';
+    } });
+    if (cfg.pedCx) cols.push({ h: 'CX', al: 'center', v: function (i) { return i.data.cx; } });
+    if (cfg.pedMin) cols.push({ h: 'Mín.', al: 'center', v: function (i) {
+      const pm = i.data.pedido_min || 1;
+      return pm > 1 ? '<span style="background:#fff0cc;color:#8a5000;padding:1px 5px;border-radius:3px;font-weight:700">' + pm + '</span>' : String(pm);
+    } });
+    if (cfg.pedEstoque) cols.push({ h: 'Estoque', al: 'center', v: function (i) {
+      return (i.data.estoque > 0)
+        ? '<span style="color:#2a6a2a;font-weight:700">' + i.data.estoque + '</span>'
+        : '<span style="color:#A01E1E;font-weight:700">0</span>';
+    } });
+    if (cfg.pedEan) cols.push({ h: 'EAN', al: 'center', v: function (i) {
+      return '<span style="font-size:0.72rem;color:#666">' + esc(i.data.ean || '') + '</span>';
+    } });
+    cols.push({ h: 'Preço un.', al: 'right', v: function (i) {
+      const p = itemUnitPrice(i), po = i.data[osIcms] || 0;
+      let out = '';
+      if (cfg.pedDePor && po > p + 0.005) {
+        out += '<span style="display:block;text-decoration:line-through;color:#bbb;font-size:0.7rem;font-weight:400">' + fmtMoney(po) + '</span>';
+      }
+      out += fmtMoney(p);
+      if (cfg.pedEspecial && i.ovr) { usouEstrela = true; out += ' <span style="color:#0E8A5F;font-weight:700">★</span>'; }
+      return out;
+    } });
+    cols.push({ h: 'Qtd', al: 'center', bold: true, v: function (i) { return i.qty; } });
+    cols.push({ h: 'Subtotal', al: 'right', v: function (i) {
+      return '<span style="font-weight:700;color:#A01E1E">' + fmtMoney(itemUnitPrice(i) * i.qty) + '</span>';
+    } });
+    if (cfg.pedEntrega) cols.push({ h: 'Entrega', v: function (i) {
+      return i.data.lancamento ? '<span style="color:#8a5000;font-weight:700;font-size:0.75rem">🚀 ' + esc(i.data.lancamento) + '</span>' : '';
+    } });
+
+    const thead = '<thead><tr>' + cols.map(function (c) {
+      return '<th style="' + thS + ';text-align:' + (c.al || 'left') + (c.w ? ';width:' + c.w : '') + '">' + c.h + '</th>';
+    }).join('') + '</tr></thead>';
+
+    const renderRows = function (arr) {
+      return arr.map(function (item) {
+        return '<tr>' + cols.map(function (c) {
+          return '<td style="' + tdS + ';text-align:' + (c.al || 'left') +
+                 (c.pad ? ';padding:' + c.pad : '') + (c.bold ? ';font-weight:700' : '') + '">' +
+                 c.v(item) + '</td>';
+        }).join('') + '</tr>';
+      }).join('');
+    };
+
+    const somaFinal = function (arr) { return arr.reduce(function (s, i) { return s + itemUnitPrice(i) * i.qty; }, 0); };
+    const somaTabela = function (arr) { return arr.reduce(function (s, i) { return s + (i.data[osIcms] || 0) * i.qty; }, 0); };
+    const totalGeral = somaFinal(items);
+    const totalQtd = items.reduce(function (s, i) { return s + i.qty; }, 0);
+    const economia = somaTabela(items) - totalGeral;
+
+    const tabela = function (arr) {
+      return '<table style="width:100%;border-collapse:collapse;margin-bottom:4px">' + thead + '<tbody>' + renderRows(arr) + '</tbody></table>';
+    };
+
+    let body = '';
+    if (cfg.pedResumo) {
+      if (linha.length) {
+        body += '<h3 style="color:#1B3A5C;font-size:0.88rem;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.5px">Linha</h3>' +
+          tabela(linha) +
+          '<p style="text-align:right;font-size:0.82rem;font-weight:700;color:#555;margin:4px 0 20px">Subtotal linha: ' + fmtMoney(somaFinal(linha)) + '</p>';
+      }
+      if (lanc.length) {
+        body += '<h3 style="color:#c07000;font-size:0.88rem;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.5px">Lançamentos</h3>' +
+          tabela(lanc) +
+          '<p style="text-align:right;font-size:0.82rem;font-weight:700;color:#555;margin:4px 0 20px">Subtotal lançamentos: ' + fmtMoney(somaFinal(lanc)) + '</p>';
+      }
+    } else {
+      body += tabela(linha.concat(lanc)) + '<div style="height:12px"></div>';
+    }
+
+    if (osIcms === 'expind') {
+      const impCount = items.filter(function (i) { return (i.data.origem || 'IMP') === 'IMP'; }).length;
+      body += '<div style="background:#e6f4f0;border:1px solid rgba(14,110,90,0.3);border-radius:8px;padding:9px 12px;margin-bottom:14px;font-size:0.78rem;color:#0E6E5A;font-weight:700">' +
+        'Tabela EXP-IND &middot; Exporta&ccedil;&atilde;o Indireta.' +
+        (impCount ? ' &#9888;&#65039; ' + impCount + ' item(ns) importado(s) neste pedido &mdash; carga tribut&aacute;ria diferente da dos produtos nacionais.' : '') +
+        '</div>';
+    }
+
+    body += '<div style="border-top:2px solid #1B3A5C;padding-top:10px;display:flex;justify-content:flex-end">' +
+      '<table style="font-size:0.85rem;border-collapse:collapse">' +
+      '<tr><td style="color:#888;padding:3px 12px">Itens:</td><td style="font-weight:700;padding:3px 0;text-align:right">' + items.length + '</td></tr>' +
+      '<tr><td style="color:#888;padding:3px 12px">Qtd total:</td><td style="font-weight:700;padding:3px 0;text-align:right">' + totalQtd + ' un.</td></tr>' +
+      (cfg.pedDePor && economia > 0.005
+        ? '<tr><td style="color:#0E8A5F;padding:3px 12px">Economia:</td><td style="font-weight:700;color:#0E8A5F;padding:3px 0;text-align:right">- ' + fmtMoney(economia) + '</td></tr>'
+        : '') +
+      '<tr><td style="color:#333;padding:6px 12px 3px;font-weight:700;font-size:1rem">TOTAL GERAL:</td>' +
+      '<td style="font-weight:700;font-size:1rem;color:#A01E1E;padding:6px 0 3px;text-align:right">' + fmtMoney(totalGeral) + '</td></tr>' +
+      '</table></div>';
+
+    if (usouEstrela) {
+      body += '<p style="font-size:0.7rem;color:#0E8A5F;margin:8px 0 0;font-weight:700">★ preço negociado para este pedido.</p>';
+    }
+    if (cfg.pedObs) {
+      body += '<div style="margin-top:16px;border:1px solid #e2e2e2;border-radius:8px;padding:10px 12px;background:#fafafa">' +
+        '<div style="font-size:0.68rem;font-weight:800;color:#1B3A5C;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Observações</div>' +
+        '<div style="font-size:0.78rem;color:#444;line-height:1.5;white-space:pre-wrap">' + esc(cfg.pedObs) + '</div></div>';
+    }
+    if (cfg.pedAssinatura) {
+      body += '<div style="margin-top:38px;display:flex;gap:40px">' +
+        '<div style="flex:1;border-top:1px solid #999;padding-top:6px;text-align:center;font-size:0.74rem;color:#666">' +
+          (cfg.pedCliente ? esc(cfg.pedCliente) : 'Cliente') + '</div>' +
+        '<div style="flex:1;border-top:1px solid #999;padding-top:6px;text-align:center;font-size:0.74rem;color:#666">' +
+          'Xalingo' + (cfg.pedVendedor ? ' &middot; ' + esc(cfg.pedVendedor) : '') + '</div></div>';
+    }
+
+    /* cabeçalho com os dados do cliente */
+    const dadosCli = [
+      ['Cliente', cfg.pedCliente], ['CNPJ / CPF', cfg.pedCnpj], ['Cidade / UF', cfg.pedCidade],
+      ['Contato', cfg.pedContato], ['Vendedor', cfg.pedVendedor], ['Pagamento', cfg.pedPgto],
+      ['Frete', cfg.pedFrete], ['Transportadora', cfg.pedTransp],
+      ['Previsão de entrega', cfg.pedPrevisao], ['Validade da proposta', cfg.pedValidade]
+    ].filter(function (l) { return l[1]; });
+
+    const boxCli = dadosCli.length
+      ? '<div style="border:1px solid #dfe5ec;border-radius:10px;padding:10px 14px;margin-bottom:16px;' +
+        'display:grid;grid-template-columns:repeat(3,1fr);gap:7px 18px">' +
+        dadosCli.map(function (l) {
+          return '<div><div style="font-size:0.6rem;font-weight:800;color:#8a97a6;text-transform:uppercase;letter-spacing:0.4px">' +
+            l[0] + '</div><div style="font-size:0.82rem;font-weight:700;color:#1a2634">' + esc(l[1]) + '</div></div>';
+        }).join('') + '</div>'
+      : '';
+
+    const descBadge = (cfg.pedDesc && globalDiscount > 0)
+      ? ' &nbsp;&middot;&nbsp; <span style="background:#f0c040;color:#3a2800;padding:1px 7px;border-radius:10px;font-weight:700">Desconto: ' + globalDiscount + '%</span>'
+      : '';
+    const tituloJanela = 'Pedido Xalingo' + (cfg.pedNum ? ' ' + cfg.pedNum : '') + (cfg.pedCliente ? ' - ' + cfg.pedCliente : '');
+
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+      <title>${esc(tituloJanela)}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Quicksand', Arial, sans-serif; padding: 24px 32px; color: #1a1a1a; background: #fff; }
+        table { page-break-inside: auto; }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+        thead { display: table-header-group; }
+        @media print {
+          body { padding: 12px 18px; }
+          @page { margin: 10mm 12mm; }
+          .noprint { display: none !important; }
+        }
+      </style>
+    </head><body>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #1B3A5C">
+        <div>
+          <h1 style="color:#1B3A5C;font-size:1.3rem;font-weight:700;margin:0">Pedido de Venda — Xalingo</h1>
+          <p style="color:#999;font-size:0.78rem;margin:4px 0 0">${dataPed} ${hora} &nbsp;·&nbsp; ${ICMS_NAMES[osIcms]}${cfg.pedNum ? ' &nbsp;·&nbsp; Pedido nº ' + esc(cfg.pedNum) : ''}${descBadge}</p>
+        </div>
+        <div style="display:flex;gap:8px" class="noprint">
+          <button onclick="compressAndPrint()" style="background:#1B3A5C;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-family:Quicksand,Arial,sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer">
+            🖨 Imprimir / PDF
+          </button>
+          <button onclick="window.opener.exportExcel(this)" style="background:#1d6f42;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-family:Quicksand,Arial,sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer">
+            📊 Salvar Excel
+          </button>
+        </div>
+      </div>
+      ${boxCli}
+      ${body}
+      <script>
+        async function compressAndPrint() {
+          const imgs = Array.from(document.querySelectorAll('td img[src]'));
+          await Promise.all(imgs.map(img => new Promise(resolve => {
+            if (!img.src || img.src.startsWith('data:')) { resolve(); return; }
+            const tmp = new Image();
+            tmp.crossOrigin = 'anonymous';
+            tmp.onload = () => {
+              try {
+                const c = document.createElement('canvas');
+                c.width = 80; c.height = 80;
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = '#f5f5f5'; ctx.fillRect(0,0,80,80);
+                const s = Math.min(80/tmp.naturalWidth, 80/tmp.naturalHeight);
+                const w = tmp.naturalWidth*s, h = tmp.naturalHeight*s;
+                ctx.drawImage(tmp, (80-w)/2, (80-h)/2, w, h);
+                img.src = c.toDataURL('image/jpeg', 0.35);
+              } catch(e) {}
+              resolve();
+            };
+            tmp.onerror = () => resolve();
+            tmp.src = img.src;
+          })));
+          window.print();
+        }
+      <\/script>
+    </body></html>`;
+
+    const win = window.open('', '_blank', 'width=900,height=700');
+    if (!win) { alert('O navegador bloqueou a janela do pedido. Libere os pop-ups deste site e tente de novo.'); return; }
+    win.document.write(html);
+    win.document.close();
+  }
+
+
+  // Sync ICMS on load
+  (function() {
+    const saved = currentIcms;
+    osIcms = saved;
+    applyExpIndMode(saved);
+    document.querySelectorAll('.os-icms-btn').forEach(b =>
+      b.classList.toggle('active', b.getAttribute('data-icms') === saved));
+  })();
+  // Restore cart from localStorage after badges are rendered
+  document.addEventListener('DOMContentLoaded', () => {
+    loadCart();
+    if (Object.keys(osCart).length) {
+      updateToggleBadge();
+      renderOrder();
+      Object.keys(osCart).forEach(ref => {
+        document.querySelectorAll(`.price-badge[data-ref="${ref}"]`).forEach(b => b.classList.add('selected'));
+      });
+    }
+  });
+
+
+
+
+  /* ── Excel do pedido / da vertical / do catálogo ──────────────────────────
+     Espelha o layout do pedido em HTML: cabeçalho, seções, foto do produto,
+     subtotais e totais. A coluna Qtd é editável no Excel — Subtotal e totais
+     são fórmulas, então dá para preencher direto na planilha.               */
+
+  const XLS_CDNS = [
+    'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js',
+    'https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js'
+  ];
+
+  const XLS_CATEGORIAS = [
+    { arquivo: 'blocos-de-montar.html', nome: 'Blocos de Montar' },
+    { arquivo: 'educativos.html',       nome: 'Educativos' },
+    { arquivo: 'jogos.html',            nome: 'Jogos' },
+    { arquivo: 'faz-de-conta.html',     nome: 'Faz de Conta' },
+    { arquivo: 'rodados.html',          nome: 'Rodados' },
+    { arquivo: 'esportes.html',         nome: 'Esportes' },
+    { arquivo: 'playground.html',       nome: 'Playground' }
+  ];
+
+  function loadExcelJS(i) {
+    i = i || 0;
+    if (window.ExcelJS) return Promise.resolve();
+    return new Promise((ok, fail) => {
+      if (i >= XLS_CDNS.length) return fail(new Error('Não foi possível carregar a biblioteca do Excel.'));
+      const s = document.createElement('script');
+      s.src = XLS_CDNS[i];
+      s.onload = () => ok();
+      s.onerror = () => loadExcelJS(i + 1).then(ok, fail);
+      document.head.appendChild(s);
+    });
+  }
+
+  /* ── Fotos ────────────────────────────────────────────────────────────────
+     O <img> do pedido em HTML não precisa de permissão do servidor; ler os
+     BYTES para embutir no xlsx precisa de CORS — e o servidor das fotos não
+     libera. Daí a cascata: direto → proxies que devolvem CORS. O proxy sai
+     em PNG para a transparência não virar fundo preto.                      */
+  async function bytesDaFoto(url) {
+    const semProto = url.replace(/^https?:\/\//, '');
+    const tentativas = [
+      url,
+      'https://images.weserv.nl/?url=' + encodeURIComponent(semProto) + '&w=220&h=220&fit=inside&output=png',
+      'https://corsproxy.io/?url=' + encodeURIComponent(url)
+    ];
+    for (const alvo of tentativas) {
+      try {
+        const resp = await fetch(alvo, { cache: 'force-cache', signal: AbortSignal.timeout(12000) });
+        if (!resp.ok) continue;
+        const blob = await resp.blob();
+        if (blob && blob.size > 100 && /^image\//.test(blob.type || 'image/jpeg')) return blob;
+      } catch (e) { /* tenta a próxima */ }
+    }
+    return null;
+  }
+
+  function blobParaDataURL(blob) {
+    return new Promise(ok => {
+      const fr = new FileReader();
+      fr.onload = () => ok(fr.result);
+      fr.onerror = () => ok(null);
+      fr.readAsDataURL(blob);
+    });
+  }
+
+  // Quadrado 96×96 com fundo BRANCO (PNG transparente não vira preto)
+  async function thumbFoto(url) {
+    if (!url) return null;
+    let blob = null;
+    if (url.startsWith('data:')) {
+      try { blob = await (await fetch(url)).blob(); } catch (e) { return null; }
+    } else {
+      blob = await bytesDaFoto(url);
+    }
+    if (!blob) return null;
+    try {
+      const bmp = await createImageBitmap(blob);
+      const S = 96, c = document.createElement('canvas');
+      c.width = S; c.height = S;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, S, S);
+      const k = Math.min(S / bmp.width, S / bmp.height);
+      const w = bmp.width * k, h = bmp.height * k;
+      ctx.drawImage(bmp, (S - w) / 2, (S - h) / 2, w, h);
+      bmp.close && bmp.close();
+      return { base64: c.toDataURL('image/jpeg', 0.82), extension: 'jpeg' };
+    } catch (e) {
+      const dataURL = await blobParaDataURL(blob);
+      if (!dataURL) return null;
+      return { base64: dataURL, extension: (blob.type || '').indexOf('png') >= 0 ? 'png' : 'jpeg' };
+    }
+  }
+
+  /* ── Leitura das outras verticais (mesma origem no site publicado) ─────── */
+
+  function recortarLiteralXls(txt, nome, abre, fecha) {
+    const m = new RegExp('(?:const|let|var)\\s+' + nome + '\\s*=').exec(txt);
+    if (!m) return null;
+    const ini = txt.indexOf(abre, m.index);
+    if (ini < 0) return null;
+    let nivel = 0, aspas = null, escapado = false;
+    for (let j = ini; j < txt.length; j++) {
+      const c = txt[j];
+      if (escapado) { escapado = false; continue; }
+      if (aspas) {
+        if (c === '\\') escapado = true;
+        else if (c === aspas) aspas = null;
+        continue;
+      }
+      if (c === '"' || c === "'" || c === '`') { aspas = c; continue; }
+      if (c === '/' && txt[j + 1] === '/') { j = txt.indexOf('\n', j); if (j < 0) break; continue; }
+      if (c === '/' && txt[j + 1] === '*') { j = txt.indexOf('*/', j) + 1; if (j < 1) break; continue; }
+      if (c === abre) nivel++;
+      else if (c === fecha) { nivel--; if (nivel === 0) return txt.slice(ini, j + 1); }
+    }
+    return null;
+  }
+
+  async function lerCategoriaXls(arquivo) {
+    const resp = await fetch(arquivo, { cache: 'force-cache' });
+    if (!resp.ok) throw new Error(arquivo + ' (HTTP ' + resp.status + ')');
+    const html = await resp.text();
+    const avaliar = (nome, abre, fecha) => {
+      const lit = recortarLiteralXls(html, nome, abre, fecha);
+      if (!lit) return null;
+      try { return new Function('return ' + lit)(); } catch (e) { return null; }
+    };
+    return {
+      precos:  avaliar('PRICE_CONFIG', '{', '}') || {},
+      urls:    avaliar('PRODUCT_URLS', '{', '}') || {},
+      ocultas: new Set(avaliar('REFS_OCULTAS', '[', ']') || [])
+    };
+  }
+
+  /* ── Menu de escopo ───────────────────────────────────────────────────── */
+
+  function nomeVerticalAtual() {
+    const t = (document.title || '').split('|')[0].trim();
+    return t || 'Vertical';
+  }
+
+  function fecharExcelMenu() {
+    const f = document.getElementById('xlsMenu');
+    if (f) f.remove();
+  }
+
+  function abrirExcelMenu() {
+    fecharExcelMenu();
+    const nCart = Object.keys(osCart).length;
+    const ocultas = (typeof REFS_OCULTAS !== 'undefined') ? REFS_OCULTAS : new Set();
+    const nVert = Object.keys(PRICE_CONFIG).filter(r => !ocultas.has(r)).length;
+    const vert = nomeVerticalAtual();
+
+    const opcao = (escopo, titulo, sub, ativo) =>
+      '<button class="xls-op" data-escopo="' + escopo + '"' + (ativo ? '' : ' disabled') + '>' +
+      '<b>' + titulo + '</b><span>' + sub + '</span></button>';
+
+    const f = document.createElement('div');
+    f.id = 'xlsMenu';
+    f.style.cssText = 'position:fixed;inset:0;background:rgba(12,20,32,.55);z-index:9999;display:flex;' +
+      'align-items:center;justify-content:center;padding:18px;font-family:Quicksand,Arial,sans-serif';
+    f.innerHTML =
+      '<div style="background:#fff;border-radius:16px;padding:20px 20px 16px;width:390px;max-width:100%;' +
+      'box-shadow:0 20px 50px rgba(0,0,0,.3)">' +
+        '<div style="font-size:1rem;font-weight:700;color:#1B3A5C;margin-bottom:3px">📊 Gerar Excel</div>' +
+        '<div style="font-size:.75rem;color:#1B3A5C;opacity:.6;font-weight:600;margin-bottom:14px">' +
+          'Preços da tabela ' + ICMS_NAMES[osIcms] + (globalDiscount > 0 ? ' · desconto ' + globalDiscount + '%' : '') +
+          (countOvr() > 0 ? ' · ' + countOvr() + ' preço(s) especial(is) no pedido' : '') +
+        '</div>' +
+        '<style>' +
+        '.xls-op{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid rgba(27,58,92,.16);' +
+        'border-radius:11px;padding:10px 13px;margin-bottom:8px;cursor:pointer;font-family:inherit;transition:.15s}' +
+        '.xls-op:hover:not(:disabled){border-color:#1B3A5C;transform:translateY(-1px)}' +
+        '.xls-op:disabled{opacity:.4;cursor:default}' +
+        '.xls-op b{display:block;font-size:.85rem;color:#1B3A5C;font-weight:700}' +
+        '.xls-op span{font-size:.68rem;color:#1B3A5C;opacity:.6;font-weight:600}' +
+        '</style>' +
+        opcao('pedido', '🛒 Pedido atual', nCart ? nCart + ' produto(s) selecionado(s)' : 'nenhum produto no pedido', nCart > 0) +
+        opcao('vertical', '📁 Esta vertical — ' + vert, nVert + ' produtos, com a quantidade em branco', nVert > 0) +
+        opcao('catalogo', '📚 Catálogo inteiro', '7 verticais · a busca das fotos leva alguns minutos', true) +
+        '<label style="display:flex;align-items:center;gap:7px;margin:10px 2px 4px;font-size:.75rem;' +
+        'font-weight:700;color:#1B3A5C;cursor:pointer">' +
+          '<input type="checkbox" id="xlsFotos" checked style="width:15px;height:15px;accent-color:#1B3A5C">' +
+          'Incluir as fotos dos produtos</label>' +
+        '<div id="xlsStatus" style="font-size:.72rem;font-weight:700;color:#1B3A5C;opacity:.75;' +
+        'min-height:30px;line-height:1.4;margin-top:6px"></div>' +
+        '<button id="xlsFechar" style="width:100%;background:none;border:none;padding:8px;cursor:pointer;' +
+        'font-family:inherit;font-size:.75rem;font-weight:700;color:#1B3A5C;opacity:.55">Fechar</button>' +
+      '</div>';
+    document.body.appendChild(f);
+
+    f.addEventListener('click', e => { if (e.target === f) fecharExcelMenu(); });
+    f.querySelector('#xlsFechar').onclick = fecharExcelMenu;
+    f.querySelectorAll('.xls-op').forEach(b => {
+      b.onclick = () => {
+        const status = document.getElementById('xlsStatus');
+        f.querySelectorAll('.xls-op').forEach(o => { o.disabled = true; });
+        exportExcel({
+          escopo: b.getAttribute('data-escopo'),
+          fotos: document.getElementById('xlsFotos').checked,
+          status: txt => { if (status) status.textContent = txt; },
+          aoTerminar: () => setTimeout(fecharExcelMenu, 1500)
+        });
+      };
+    });
+  }
+
+  /* ── Geração ──────────────────────────────────────────────────────────── */
+
+  async function exportExcel(opts) {
+    // compatibilidade: exportExcel(botao) continua gerando o pedido atual
+    if (opts && opts.tagName) opts = { btn: opts };
+    opts = opts || {};
+    const escopo = opts.escopo || 'pedido';
+    const comFotos = opts.fotos !== false;
+    const btn = opts.btn || null;
+    const rotuloBtn = btn ? btn.innerHTML : null;
+    const dizer = txt => {
+      if (opts.status) opts.status(txt);
+      if (btn) btn.innerHTML = txt;
+    };
+
+    if (escopo === 'pedido' && !Object.keys(osCart).length) {
+      alert('Adicione produtos ao pedido primeiro.');
+      return;
+    }
+    if (btn) btn.disabled = true;
+
+    try {
+      dizer('⏳ Carregando…');
+      await loadExcelJS();
+
+      /* 1 · grupos {titulo, itens:[{data, qty}]} + mapa de URLs das fotos */
+      const grupos = [];
+      const urlsRef = Object.assign({}, PRODUCT_URLS);
+      const ocultasLocais = (typeof REFS_OCULTAS !== 'undefined') ? REFS_OCULTAS : new Set();
+      const hoje = new Date().toLocaleDateString('pt-BR').replace(/[/]/g, '-');
+      let tituloDoc, nomeArq, editavel = false;
+
+      const doConfig = (precos, ocultas) => Object.keys(precos)
+        .filter(ref => !ocultas.has(ref))
+        .map(ref => {
+          const d = Object.assign({ ref: ref }, precos[ref]);
+          if (!d.origem) d.origem = 'IMP';
+          if (!d.pedido_min) d.pedido_min = 1;
+          return { data: d, qty: null };
+        });
+
+      if (escopo === 'pedido') {
+        const items = Object.values(osCart);
+        const linha = items.filter(i => !i.data.is_lanc && !i.data.lancamento);
+        const lanc  = items.filter(i =>  i.data.is_lanc ||  i.data.lancamento);
+        if (linha.length) grupos.push({ titulo: 'Linha', cor: 'FF1B3A5C', itens: linha });
+        if (lanc.length)  grupos.push({ titulo: 'Lançamentos', cor: 'FFC07000', itens: lanc });
+        tituloDoc = 'Pedido de Venda — Xalingo';
+        nomeArq = 'Pedido_Xalingo_' + hoje + '.xlsx';
+      } else if (escopo === 'vertical') {
+        const vert = nomeVerticalAtual();
+        grupos.push({ titulo: vert, cor: 'FF1B3A5C', itens: doConfig(PRICE_CONFIG, ocultasLocais) });
+        tituloDoc = 'Xalingo — ' + vert;
+        nomeArq = 'Xalingo_' + vert.replace(/[^0-9A-Za-zÀ-ÿ]+/g, '-') + '_' + hoje + '.xlsx';
+        editavel = true;
+      } else {
+        for (let i = 0; i < XLS_CATEGORIAS.length; i++) {
+          const cat = XLS_CATEGORIAS[i];
+          dizer('📚 Lendo as verticais… ' + (i + 1) + '/' + XLS_CATEGORIAS.length);
+          let dados;
+          try { dados = await lerCategoriaXls(cat.arquivo); } catch (e) { continue; }
+          Object.assign(urlsRef, dados.urls);
+          const itens = doConfig(dados.precos, dados.ocultas);
+          if (itens.length) grupos.push({ titulo: cat.nome, cor: 'FF1B3A5C', itens: itens });
+        }
+        if (!grupos.length) throw new Error('não deu para ler as outras verticais desta pasta');
+        tituloDoc = 'Xalingo — Catálogo Completo 2026';
+        nomeArq = 'Xalingo_Catalogo_Completo_' + hoje + '.xlsx';
+        editavel = true;
+      }
+
+      const todos = grupos.reduce((a, g) => a.concat(g.itens), []);
+
+      /* 1.5 · o pedido (e a vertical) pode ter produtos de outras verticais —
+         carrega o mapa de fotos delas para o Excel puxar imagem de TODOS,
+         exatamente como o escopo de catálogo já fazia. */
+      if (comFotos && escopo !== 'catalogo' && todos.length) {
+        const faltaUrl = () => todos.some(i => {
+          const r = i.data.ref;
+          return r && !urlsRef[r] && !imgCache[r];
+        });
+        if (faltaUrl()) {
+          const aqui = (location.pathname.split('/').pop() || '').toLowerCase();
+          const outras = XLS_CATEGORIAS.filter(c => c.arquivo.toLowerCase() !== aqui);
+          for (let i = 0; i < outras.length; i++) {
+            if (!faltaUrl()) break;
+            dizer('🔗 Localizando as fotos… ' + (i + 1) + '/' + outras.length);
+            try {
+              const dados = await lerCategoriaXls(outras[i].arquivo);
+              Object.assign(urlsRef, dados.urls);
+            } catch (e) { /* segue com o que já tem em mãos */ }
+          }
+        }
+      }
+
+      /* 2 · fotos, com fila de 6 em 6 */
+      const fotos = {};
+      let comFoto = 0, semFoto = 0;
+      if (comFotos && todos.length) {
+        const refs = todos.map(i => i.data.ref).filter(r => r && (urlsRef[r] || imgCache[r]));
+        const fila = refs.slice();
+        let feitas = 0;
+        const trabalhador = async () => {
+          while (fila.length) {
+            const ref = fila.shift();
+            if (!imgCache[ref] && urlsRef[ref]) {
+              const slug = (urlsRef[ref] || '').replace(/\/$/, '').split('/').pop();
+              try { imgCache[ref] = await resolveImgUrl(slug); } catch (e) { imgCache[ref] = ''; }
+            }
+            const f = await thumbFoto(imgCache[ref] || '');
+            fotos[ref] = f;
+            if (f) comFoto++; else if (imgCache[ref]) semFoto++;
+            feitas++;
+            if (feitas % 3 === 0 || feitas === refs.length) dizer('🖼 Fotos ' + feitas + '/' + refs.length + '…');
+          }
+        };
+        await Promise.all(Array.from({ length: Math.min(6, refs.length) }, trabalhador));
+        if (escopo === 'pedido') { try { saveCart(); } catch (e) {} }
+      }
+
+      /* 3 · planilha */
+      dizer('📄 Montando a planilha…');
+      const AZUL = 'FF1B3A5C', VINHO = 'FFA01E1E', MOEDA = 'R$ #,##0.00';
+      const agora = new Date();
+      const carimbo = agora.toLocaleDateString('pt-BR') + ' ' +
+                      agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      const wb = new ExcelJS.Workbook();
+      wb.creator = 'Xalingo S.A. Indústria e Comércio';
+      wb.created = agora;
+      const ws = wb.addWorksheet(escopo === 'pedido' ? 'Pedido' : 'Produtos', {
+        pageSetup: {
+          paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0,
+          margins: { left: .4, right: .4, top: .5, bottom: .5, header: .2, footer: .2 }
+        }
+      });
+      ws.properties.defaultRowHeight = 16;
+      [11, 9, 48, 8, 6, 7, 15, 7, 15, 15].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+
+      const pintar = (cell, argb) => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb } }; };
+      const faixa  = (row, argb) => { for (let c = 1; c <= 10; c++) pintar(row.getCell(c), argb); };
+
+      let r = ws.addRow([tituloDoc]);
+      ws.mergeCells(r.number, 1, r.number, 10);
+      r.getCell(1).font = { bold: true, size: 16, color: { argb: AZUL } };
+      r.getCell(1).alignment = { vertical: 'middle' };
+      r.height = 28;
+
+      r = ws.addRow([carimbo + '   ·   ' + ICMS_NAMES[osIcms] +
+                     (globalDiscount > 0 ? '   ·   Desconto ' + globalDiscount + '%' : '') +
+                     (escopo === 'pedido' && countOvr() > 0 ? '   ·   ' + countOvr() + ' preço(s) especial(is)' : '') +
+                     (editavel ? '   ·   preencha a coluna Qtd — os totais se calculam sozinhos' : '')]);
+      ws.mergeCells(r.number, 1, r.number, 10);
+      r.getCell(1).font = { bold: true, size: 10, color: { argb: 'FF8C8C8C' } };
+      r.getCell(1).alignment = { vertical: 'middle' };
+      r.height = 18;
+      for (let c = 1; c <= 10; c++) r.getCell(c).border = { bottom: { style: 'medium', color: { argb: AZUL } } };
+      if (escopo === 'pedido') {
+        const cfgPed = pedCfgLer();
+        const infoPed = [];
+        if (cfgPed.pedCliente) infoPed.push('Cliente: ' + cfgPed.pedCliente);
+        if (cfgPed.pedCnpj)    infoPed.push('CNPJ: ' + cfgPed.pedCnpj);
+        if (cfgPed.pedNum)     infoPed.push('Pedido nº ' + cfgPed.pedNum);
+        if (cfgPed.pedVendedor)infoPed.push('Vendedor: ' + cfgPed.pedVendedor);
+        if (cfgPed.pedPgto)    infoPed.push('Pagamento: ' + cfgPed.pedPgto);
+        if (cfgPed.pedFrete)   infoPed.push('Frete: ' + cfgPed.pedFrete);
+        if (infoPed.length) {
+          const rc = ws.addRow([]);
+          ws.mergeCells(rc.number, 1, rc.number, 10);
+          rc.getCell(1).value = infoPed.join('   ·   ');
+          rc.getCell(1).font = { bold: true, size: 10.5, color: { argb: AZUL } };
+          rc.getCell(1).alignment = { vertical: 'middle' };
+          rc.height = 18;
+        }
+      }
+      ws.addRow([]).height = 7;
+
+      const CAB = ['Foto', 'REF', 'Produto', 'Orig.', 'CX', 'Mín.', 'Preço un.', 'Qtd', 'Subtotal', 'Entrega'];
+      let primeiroCab = 0;
+      const linhasSubtotal = [], faixasQtd = [];
+
+      /* 4 · seções */
+      grupos.forEach(g => {
+        if (!g.itens.length) return;
+
+        const s = ws.addRow([]);
+        ws.mergeCells(s.number, 1, s.number, 10);
+        faixa(s, 'FFEDF2F7');
+        s.getCell(1).value = g.titulo.toUpperCase();
+        s.getCell(1).font = { bold: true, size: 11, color: { argb: g.cor } };
+        s.getCell(1).alignment = { vertical: 'middle', indent: 1 };
+        s.height = 21;
+
+        const h = ws.addRow(CAB);
+        h.height = 22;
+        h.eachCell({ includeEmpty: true }, cell => {
+          cell.font = { bold: true, size: 10.5, color: { argb: 'FFFFFFFF' } };
+          pintar(cell, AZUL);
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        });
+        h.getCell(3).alignment = { horizontal: 'left', vertical: 'middle' };
+        if (!primeiroCab) primeiroCab = h.number;
+
+        let primeira = 0, ultima = 0;
+        g.itens.forEach((item, i) => {
+          const d = item.data;
+          const price = itemUnitPrice(item);
+          const ref = d.ref || '';
+          const isNac = (d.origem || 'IMP') === 'NAC';
+          const refCel = /^[1-9]\d*$/.test(ref) ? Number(ref) : ref;
+
+          const row = ws.addRow([
+            '', refCel, d.nome, d.origem || 'IMP', d.cx, d.pedido_min || 1,
+            price > 0 ? price : (osIcms === 'expind' ? 'Sob consulta' : 'Aguardar'),
+            item.qty == null ? null : item.qty,
+            null,
+            d.lancamento ? '🚀 ' + d.lancamento : ''
+          ]);
+          if (!primeira) primeira = row.number;
+          ultima = row.number;
+
+          // Subtotal como fórmula: a Qtd continua editável dentro do Excel
+          if (price > 0) {
+            row.getCell(9).value = {
+              formula: 'IFERROR(IF(H' + row.number + '="","",G' + row.number + '*H' + row.number + '),"")',
+              result: item.qty ? parseFloat((price * item.qty).toFixed(2)) : ''
+            };
+          }
+
+          row.height = 42;
+          row.eachCell({ includeEmpty: true }, cell => {
+            pintar(cell, i % 2 ? 'FFF6F9FC' : 'FFFFFFFF');
+            cell.font = { size: 10 };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.border = { bottom: { style: 'thin', color: { argb: 'FFE3E9EF' } } };
+          });
+          row.getCell(2).font = { size: 10, bold: true, color: { argb: 'FF666666' } };
+          if (typeof refCel === 'number') row.getCell(2).numFmt = '0';
+          row.getCell(3).font = { size: 10, bold: true, color: { argb: AZUL } };
+          row.getCell(3).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+          row.getCell(4).font = { size: 9.5, bold: true, color: { argb: isNac ? 'FF2A6A2A' : AZUL } };
+          pintar(row.getCell(4), isNac ? 'FFE0F0E0' : 'FFDCE8F5');
+          if ((d.pedido_min || 1) > 1) {
+            row.getCell(6).font = { size: 10, bold: true, color: { argb: 'FF8A5000' } };
+            pintar(row.getCell(6), 'FFFFF0CC');
+          }
+          if (price > 0) row.getCell(7).numFmt = MOEDA;
+          row.getCell(7).alignment = { horizontal: 'right', vertical: 'middle' };
+          row.getCell(8).font = { size: 10, bold: true };
+          row.getCell(8).border = {
+            bottom: { style: 'thin', color: { argb: 'FFE3E9EF' } },
+            left:   { style: 'thin', color: { argb: 'FFB9C7D6' } },
+            right:  { style: 'thin', color: { argb: 'FFB9C7D6' } }
+          };
+          row.getCell(9).numFmt = MOEDA;
+          row.getCell(9).font = { size: 10, bold: true, color: { argb: VINHO } };
+          row.getCell(9).alignment = { horizontal: 'right', vertical: 'middle' };
+          if (d.lancamento) {
+            row.getCell(10).font = { size: 9.5, bold: true, color: { argb: 'FF8A5000' } };
+            pintar(row.getCell(10), 'FFFFF3CC');
+          }
+
+          const foto = fotos[ref];
+          if (foto) {
+            const id = wb.addImage({ base64: foto.base64, extension: foto.extension });
+            ws.addImage(id, {
+              tl: { col: 0.14, row: row.number - 1 + 0.07 },
+              ext: { width: 52, height: 52 },
+              editAs: 'oneCell'
+            });
+          }
+        });
+
+        const st = ws.addRow([]);
+        ws.mergeCells(st.number, 3, st.number, 8);
+        faixa(st, 'FFEDF2F7');
+        st.getCell(3).value = 'Subtotal ' + g.titulo;
+        st.getCell(3).font = { bold: true, size: 10, color: { argb: 'FF555555' } };
+        st.getCell(3).alignment = { horizontal: 'right', vertical: 'middle' };
+        st.getCell(9).value = { formula: 'SUM(I' + primeira + ':I' + ultima + ')' };
+        st.getCell(9).numFmt = MOEDA;
+        st.getCell(9).font = { bold: true, size: 10.5, color: { argb: AZUL } };
+        st.getCell(9).alignment = { horizontal: 'right', vertical: 'middle' };
+        st.height = 20;
+        linhasSubtotal.push(st.number);
+        faixasQtd.push('H' + primeira + ':H' + ultima);
+        ws.addRow([]).height = 7;
+      });
+
+      if (osIcms === 'expind') {
+        const impCount = todos.filter(i => (i.data.origem || 'IMP') === 'IMP').length;
+        const n = ws.addRow([]);
+        ws.mergeCells(n.number, 1, n.number, 10);
+        faixa(n, 'FFE6F4F0');
+        n.getCell(1).value = 'Tabela EXP-IND · Exportação Indireta.' +
+          (impCount ? ' ⚠️ ' + impCount + ' item(ns) importado(s) — carga tributária diferente da dos produtos nacionais.' : '');
+        n.getCell(1).font = { bold: true, size: 9.5, color: { argb: 'FF0E6E5A' } };
+        n.getCell(1).alignment = { vertical: 'middle', indent: 1 };
+        n.height = 22;
+        ws.addRow([]).height = 7;
+      }
+
+      /* 5 · totais */
+      const totalLinha = (rot, valor, moeda, destaque) => {
+        const t = ws.addRow([]);
+        ws.mergeCells(t.number, 6, t.number, 8);
+        t.getCell(6).value = rot;
+        t.getCell(9).value = valor;
+        if (moeda) t.getCell(9).numFmt = MOEDA;
+        if (destaque) {
+          for (let c = 6; c <= 9; c++) pintar(t.getCell(c), AZUL);
+          t.getCell(6).font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+          t.getCell(9).font = { bold: true, size: 12, color: { argb: 'FFFFD6D6' } };
+          t.height = 24;
+        } else {
+          t.getCell(6).font = { size: 10, color: { argb: 'FF888888' } };
+          t.getCell(9).font = { bold: true, size: 10 };
+          t.height = 18;
+        }
+        t.getCell(6).alignment = { horizontal: 'right', vertical: 'middle' };
+        t.getCell(9).alignment = { horizontal: 'right', vertical: 'middle' };
+      };
+
+      totalLinha(escopo === 'pedido' ? 'Itens:' : 'Produtos na lista:', todos.length, false, false);
+      totalLinha('Qtd total:', faixasQtd.length ? { formula: 'SUM(' + faixasQtd.join(',') + ')' } : 0, false, false);
+      if ((globalDiscount > 0 || countOvr() > 0) && escopo === 'pedido') {
+        const bruto = todos.reduce((s, i) => s + (i.data[osIcms] || 0) * (i.qty || 0), 0);
+        const liq   = todos.reduce((s, i) => s + itemUnitPrice(i) * (i.qty || 0), 0);
+        const dif   = parseFloat((bruto - liq).toFixed(2));
+        if (dif > 0.005)
+        totalLinha('Economia' + (globalDiscount > 0 ? ' (' + globalDiscount + '%)' : '') + ':', -dif, true, false);
+      }
+      totalLinha('TOTAL GERAL:',
+        linhasSubtotal.length ? { formula: linhasSubtotal.map(n => 'I' + n).join('+') } : 0, true, true);
+
+      if (escopo === 'pedido') {
+        const obsPed = (pedCfgLer().pedObs || '').trim();
+        if (obsPed) {
+          ws.addRow([]).height = 6;
+          const ro = ws.addRow([]);
+          ws.mergeCells(ro.number, 1, ro.number, 10);
+          ro.getCell(1).value = 'Observações: ' + obsPed.replace(/\s*\n\s*/g, '   ·   ');
+          ro.getCell(1).font = { size: 10, italic: true, color: { argb: 'FF666666' } };
+          ro.getCell(1).alignment = { vertical: 'middle', wrapText: true };
+          ro.height = 20;
+        }
+      }
+
+      if (primeiroCab) {
+        ws.views = [{ state: 'frozen', ySplit: primeiroCab }];
+        ws.pageSetup.printTitlesRow = primeiroCab + ':' + primeiroCab;
+      }
+
+      /* 6 · salva */
+      const buf = await wb.xlsx.writeBuffer();
+      const url = URL.createObjectURL(new Blob([buf],
+        { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = nomeArq;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+
+      if (semFoto) console.warn('[Excel] ' + semFoto + ' foto(s) não puderam ser baixadas.');
+      dizer('✅ Pronto — ' + todos.length + ' produto(s)' + (comFotos ? ', ' + comFoto + ' com foto' : '') + '.');
+      if (comFotos && semFoto && !comFoto) {
+        alert('O Excel foi gerado, mas sem as fotos: o servidor das imagens não liberou o download delas para o navegador. O restante está completo.');
+      }
+      if (opts.aoTerminar) opts.aoTerminar();
+    } catch (e) {
+      const msg = (location.protocol === 'file:' && escopo === 'catalogo')
+        ? 'Abrindo o arquivo direto do disco o navegador bloqueia a leitura das outras verticais. Rode pelo site publicado.'
+        : 'Não deu para gerar o Excel: ' + (e && e.message ? e.message : e);
+      dizer('⚠️ ' + msg);
+      alert(msg);
+    } finally {
+      if (btn) { btn.innerHTML = rotuloBtn; btn.disabled = false; }
+    }
+  }
+
+
+
+  // ===== DISCOUNT SYSTEM =====
+  // Senha protegida por SHA-256 — não é possível reverter o hash para descobrir a senha original
+  const DISC_HASH = '5cde9ad8cf249b61dd22ca81ab3a79915e4d43755c151855e1f3fb4f3de33f70';
+  let globalDiscount = 0;
+  let discountUnlocked = false;
+
+  async function hashString(str) {
+    const enc = new TextEncoder().encode(str);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  function getDiscountedPrice(v) {
+    if (!v || v <= 0 || globalDiscount <= 0) return v;
+    return parseFloat((v * (1 - globalDiscount / 100)).toFixed(2));
+  }
+
+  // ── PREÇO ESPECIAL POR PRODUTO ───────────────────────────────────────────
+  // osCart[ref].ovr = { t:'val'|'pct', v:Number, icms:'p18'|... } | null
+  // O preço especial do item SEMPRE vence o desconto global por cluster.
+  function itemUnitPrice(item) {
+    if (!item || !item.data) return 0;
+    var base = item.data[osIcms] || 0;
+    var o = item.ovr;
+    if (o && o.v > 0) {
+      if (o.t === 'val') return parseFloat(Number(o.v).toFixed(2));
+      return parseFloat((base * (1 - Number(o.v) / 100)).toFixed(2));
+    }
+    return getDiscountedPrice(base);
+  }
+
+  function precoFinalRef(ref, key) {
+    var d = PRICE_CONFIG[ref];
+    if (!d) return 0;
+    var it = osCart[ref];
+    if (it && it.ovr && it.ovr.v > 0) {
+      if (it.ovr.t === 'val') return parseFloat(Number(it.ovr.v).toFixed(2));
+      return parseFloat(((d[key] || 0) * (1 - Number(it.ovr.v) / 100)).toFixed(2));
+    }
+    return getDiscountedPrice(d[key] || 0);
+  }
+
+  function badgeMainHTML(ref, d, key) {
+    var orig = d[key] || 0;
+    var fin  = precoFinalRef(ref, key);
+    var txt  = fin > 0 ? 'R$ ' + fin.toFixed(2).replace('.', ',')
+                       : (key === 'expind' ? 'Sob consulta' : 'Aguardar');
+    if (orig > 0 && fin < orig - 0.005) {
+      return '<span style="display:block;text-decoration:line-through;opacity:0.4;font-size:0.72rem;font-weight:400;line-height:1.2">R$ ' +
+             orig.toFixed(2).replace('.', ',') + '</span>' + txt;
+    }
+    return txt;
+  }
+
+  // Redesenha o valor de todos os selos do catálogo na tabela informada
+  function refreshBadges(key) {
+    var k = key || currentIcms || osIcms;
+    document.querySelectorAll('.price-badge').forEach(function (sel) {
+      var ref = sel.dataset.ref;
+      var d = PRICE_CONFIG[ref];
+      if (!d) return;
+      var main = sel.querySelector('.price-main');
+      if (main) main.innerHTML = badgeMainHTML(ref, d, k);
+      sel.classList.toggle('has-ovr', !!(osCart[ref] && osCart[ref].ovr));
+    });
+  }
+
+  function countOvr() {
+    return Object.keys(osCart).filter(function(r) { return !!osCart[r].ovr; }).length;
+  }
+
+  function _ovrSync() { renderOrder(); refreshBadges(); _updateOvrClearAll(); saveCart(); }
+
+  function setItemOvrMode(ref, t) {
+    var it = osCart[ref];
+    if (!it || !discountUnlocked) return;
+    it.ovrMode = t;
+    if (it.ovr) it.ovr = { t: t, v: it.ovr.v, icms: osIcms };
+    _ovrSync();
+  }
+
+  function setItemOvrValor(ref, val) {
+    var it = osCart[ref];
+    if (!it || !discountUnlocked) return;
+    var t = (it.ovr && it.ovr.t) || it.ovrMode || 'val';
+    var n = parseFloat(String(val).replace(',', '.'));
+    if (!isFinite(n) || n <= 0) {
+      it.ovr = null;
+    } else if (t === 'pct') {
+      it.ovr = { t: 'pct', v: Math.min(100, n), icms: osIcms };
+    } else {
+      it.ovr = { t: 'val', v: n, icms: osIcms };
+    }
+    it.ovrMode = t;
+    _ovrSync();
+  }
+
+  function clearItemOvr(ref) {
+    var it = osCart[ref];
+    if (!it) return;
+    it.ovr = null;
+    _ovrSync();
+  }
+
+  function clearAllOvr() {
+    var n = 0;
+    Object.keys(osCart).forEach(function(r) { if (osCart[r].ovr) { osCart[r].ovr = null; n++; } });
+    if (n) _ovrSync();
+  }
+
+  function _updateOvrClearAll() {
+    var b = document.getElementById('osOvrClearAll');
+    if (!b) return;
+    var n = countOvr();
+    b.style.display = n ? 'block' : 'none';
+    b.textContent = '✕ Limpar preços especiais (' + n + ')';
+  }
+
+  function openDiscountAuth() {
+    const bar = document.getElementById('osDiscountBar');
+    if (bar && bar.classList.contains('open')) {
+      // Fecha barra e trava novamente
+      bar.classList.remove('open');
+      discountUnlocked = false;
+      renderOrder();
+      return;
+    }
+    // Sempre exige senha para abrir/editar
+    const overlay = document.getElementById('discPwdOverlay');
+    overlay.classList.add('open');
+    setTimeout(function() { var el = document.getElementById('discPwdInput'); if(el) el.focus(); }, 120);
+  }
+
+  function closeDiscPwd() {
+    document.getElementById('discPwdOverlay').classList.remove('open');
+    document.getElementById('discPwdInput').value = '';
+    document.getElementById('discPwdErr').classList.remove('show');
+  }
+
+  function checkDiscPwd() {
+    var val = document.getElementById('discPwdInput').value;
+    hashString(val).then(function(h) {
+      if (h === DISC_HASH) {
+        discountUnlocked = true;
+        closeDiscPwd();
+        document.getElementById('osDiscountBar').classList.add('open');
+        // Restaurar botão ativo conforme desconto salvo
+        document.querySelectorAll('.os-dc-btn').forEach(function(b) {
+          var m = (b.getAttribute('onclick')||'').match(/setCluster\(this,(\d+(?:\.\d+)?)\)/);
+          var pct = m ? parseFloat(m[1]) : -1;
+          b.classList.toggle('active', pct === globalDiscount || (!m && globalDiscount === 0));
+        });
+        renderOrder();
+        _updateOvrClearAll();
+        if (!document.getElementById('orderSidebar').classList.contains('open')) {
+          toggleOrderSidebar();
+        }
+      } else {
+        document.getElementById('discPwdErr').classList.add('show');
+        document.getElementById('discPwdInput').value = '';
+        document.getElementById('discPwdInput').focus();
+      }
+    });
+  }
+
+  function setCluster(btn, pct) {
+    globalDiscount = pct;
+    document.getElementById('osDiscountInput').value = pct;
+    document.querySelectorAll('.os-dc-btn').forEach(function(b) { b.classList.toggle('active', b === btn); });
+    localStorage.setItem('xalingo-disc-pct', pct);
+    _applyDiscount();
+  }
+
+  function setManualDiscount(val) {
+    var pct = Math.min(100, Math.max(0, parseFloat(val) || 0));
+    globalDiscount = pct;
+    document.querySelectorAll('.os-dc-btn').forEach(function(b) { b.classList.remove('active'); });
+    localStorage.setItem('xalingo-disc-pct', pct);
+    _applyDiscount();
+  }
+
+  function stepDiscount(delta) {
+    var cur = parseFloat(document.getElementById('osDiscountInput').value) || 0;
+    var next = Math.min(100, Math.max(0, cur + delta));
+    document.getElementById('osDiscountInput').value = next;
+    setManualDiscount(next);
+  }
+
+  function _updateDiscTrigger() {
+    var trigger = document.getElementById('osDiscTrigger');
+    var badge = document.getElementById('osDiscPctBadge');
+    if (!trigger) return;
+    if (globalDiscount > 0) {
+      trigger.classList.add('active');
+      if (badge) badge.textContent = '-' + globalDiscount + '%';
+    } else {
+      trigger.classList.remove('active');
+      if (badge) badge.textContent = '0%';
+    }
+  }
+
+  function _applyDiscount() {
+    _updateDiscTrigger();
+    renderOrder();
+    _updateOvrClearAll();
+    refreshBadges(currentIcms || osIcms);
+  }
+
+  // ── Restaurar desconto salvo no localStorage (sem pedir senha) ───────────
+  (function() {
+    var saved = parseFloat(localStorage.getItem('xalingo-disc-pct') || '0');
+    if (saved > 0) {
+      globalDiscount = saved;
+      var inp = document.getElementById('osDiscountInput');
+      if (inp) inp.value = saved;
+    }
+  })();
+
+
 </script>
 
+
+<!-- Price modal -->
+<div class="price-modal-overlay" id="priceModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="price-modal">
+    <button class="pm-close" onclick="document.getElementById('priceModal').classList.remove('open')">✕</button>
+    <div id="pmContent"></div>
+  </div>
+</div>
+
+
+<!-- Order toggle tab -->
+<button class="order-toggle" id="orderToggleBtn" onclick="toggleOrderSidebar()">
+  <span class="order-toggle-badge" id="orderToggleBadge">0</span>
+  <span>Pedido</span>
+</button>
+
+<!-- Overlay -->
+<div class="order-overlay" id="orderOverlay" onclick="toggleOrderSidebar()"></div>
+
+<!-- Right sidebar -->
+<div class="order-sidebar" id="orderSidebar">
+  <div class="os-header">
+    <div>
+      <div class="os-title">📋 Pedido de Venda</div>
+      <div class="os-subtitle" id="osSubtitle">Nenhum produto selecionado</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="os-discount-trigger" id="osDiscTrigger" onclick="openDiscountAuth()" title="Desconto comercial">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span class="os-disc-pct-badge" id="osDiscPctBadge">0%</span>
+      </button>
+      <button class="os-close" onclick="toggleOrderSidebar()">✕</button>
+    </div>
+  </div>
+  <div class="os-discount-bar" id="osDiscountBar">
+    <div class="os-disc-section-label">Cluster / Segmento</div>
+    <div class="os-discount-clusters">
+      <button class="os-dc-btn dc-none active" onclick="setCluster(this,0)">Sem desconto <span class="dc-pct">—</span></button>
+      <button class="os-dc-btn" onclick="setCluster(this,31)"><span>Atacado</span><span class="dc-pct">31%</span></button>
+      <button class="os-dc-btn" onclick="setCluster(this,25)"><span>E-commerce</span><span class="dc-pct">25%</span></button>
+      <button class="os-dc-btn" onclick="setCluster(this,25)"><span>Var. Especializado</span><span class="dc-pct">25%</span></button>
+      <button class="os-dc-btn" onclick="setCluster(this,25)"><span>Var. Geral</span><span class="dc-pct">25%</span></button>
+      <button class="os-dc-btn" onclick="setCluster(this,20)"><span>Var. Redes</span><span class="dc-pct">20%</span></button>
+      <button class="os-dc-btn" onclick="setCluster(this,20)"><span>Var. Supermercados</span><span class="dc-pct">20%</span></button>
+      <button class="os-dc-btn" onclick="setCluster(this,22)"><span>Licitação</span><span class="dc-pct">22%</span></button>
+    </div>
+    <div class="os-disc-section-label" style="margin-top:4px">% manual</div>
+    <div class="os-disc-manual-row">
+      <label>Desconto</label>
+      <div class="os-disc-manual-btns">
+        <button onclick="stepDiscount(-1)">−</button>
+        <button onclick="stepDiscount(1)">+</button>
+      </div>
+      <input type="number" id="osDiscountInput" min="0" max="100" step="0.5" value="0"
+        oninput="setManualDiscount(this.value)" onchange="setManualDiscount(this.value)">
+      <span class="os-disc-manual-unit">%</span>
+    </div>
+    <div class="os-disc-section-label" style="margin-top:4px">Preço por produto</div>
+    <div class="os-ovr-hint">Com a área liberada, cada produto do pedido ganha um campo <b>Preço especial</b>: informe o valor unitário (R$) ou o % de desconto só daquele item. O preço do item sempre prevalece sobre o desconto do cluster.</div>
+    <button class="os-ovr-clearall" id="osOvrClearAll" style="display:none" onclick="clearAllOvr()">✕ Limpar preços especiais (0)</button>
+  </div>
+
+  <div class="os-icms-bar">
+    <span class="os-icms-label">Tabela:</span>
+    <button class="os-icms-btn active" data-icms="p18"   onclick="setOsIcms(this,'p18')">18%</button>
+    <button class="os-icms-btn"        data-icms="p12rs" onclick="setOsIcms(this,'p12rs')">12% RS</button>
+    <button class="os-icms-btn"        data-icms="p12"   onclick="setOsIcms(this,'p12')">12% SC/PR/SP</button>
+    <button class="os-icms-btn"        data-icms="p7"    onclick="setOsIcms(this,'p7')">7%</button>
+    <button class="os-icms-btn expind" data-icms="expind" onclick="setOsIcms(this,'expind')">EXP-IND</button>
+  </div>
+
+  <div class="os-body" id="osBody">
+    <div class="os-empty">Clique no preço de um produto no catálogo para adicioná-lo ao pedido</div>
+  </div>
+
+  <div class="os-footer">
+    <div class="os-totals" id="osTotals"></div>
+    <div class="os-action-btns">
+      <button class="os-btn-clear" onclick="clearOrder()">Limpar</button>
+      <button class="os-btn-print" onclick="printOrder()">📄 Gerar Pedido</button>
+    </div>
+    <div class="os-action-btns" style="margin-top:6px">
+      <button class="os-btn-xls" onclick="abrirExcelMenu()" style="flex:1;background:#1d6f42;color:#fff;border:none;border-radius:8px;padding:8px;font-family:'Quicksand',sans-serif;font-size:0.75rem;font-weight:700;cursor:pointer">📊 Excel — pedido, vertical ou catálogo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Print modal -->
+<div class="price-modal-overlay" id="printModal" style="z-index:300" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="price-modal" style="width:720px;max-width:95vw;max-height:90vh;overflow-y:auto">
+    <button class="pm-close" onclick="document.getElementById('printModal').classList.remove('open')">✕</button>
+    <div id="printContent"></div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button onclick="compressAndPrint()" style="background:#1B3A5C;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-family:Quicksand,sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer">🖨 Imprimir / PDF</button>
+      <button onclick="document.getElementById('printModal').classList.remove('open')" style="background:transparent;border:1px solid #ccc;border-radius:8px;padding:9px 20px;font-family:Quicksand,sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer">Fechar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal: dados do pedido antes de gerar o PDF -->
+<div class="ped-overlay" id="pedidoModal" onclick="if(event.target===this)fecharPedidoModal()">
+  <div class="ped-box">
+    <div class="ped-head">
+      <div>
+        <div class="ped-title">📄 Gerar Pedido</div>
+        <div class="ped-sub" id="pedResumoItens"></div>
+      </div>
+      <button class="ped-x" onclick="fecharPedidoModal()">✕</button>
+    </div>
+
+    <div class="ped-body">
+      <div class="ped-sec">Cliente</div>
+      <div class="ped-grid">
+        <label class="ped-f ped-2"><span>Cliente / razão social</span><input id="pedCliente" type="text" placeholder="Nome do cliente"></label>
+        <label class="ped-f"><span>CNPJ / CPF</span><input id="pedCnpj" type="text" placeholder="00.000.000/0000-00"></label>
+        <label class="ped-f"><span>Cidade / UF</span><input id="pedCidade" type="text" placeholder="Santa Cruz do Sul / RS"></label>
+        <label class="ped-f"><span>Contato / comprador</span><input id="pedContato" type="text" placeholder="nome, telefone ou e-mail"></label>
+        <label class="ped-f"><span>Vendedor / representante</span><input id="pedVendedor" type="text"></label>
+      </div>
+
+      <div class="ped-sec">Pedido</div>
+      <div class="ped-grid">
+        <label class="ped-f"><span>Nº / referência</span><input id="pedNum" type="text" placeholder="ex.: 2026-0143"></label>
+        <label class="ped-f"><span>Data</span><input id="pedData" type="date"></label>
+        <label class="ped-f"><span>Condição de pagamento</span><input id="pedPgto" type="text" placeholder="ex.: 30/60/90 dias"></label>
+        <label class="ped-f"><span>Frete</span>
+          <select id="pedFrete">
+            <option value="">—</option>
+            <option>CIF — por conta da Xalingo</option>
+            <option>FOB — por conta do cliente</option>
+          </select></label>
+        <label class="ped-f"><span>Transportadora</span><input id="pedTransp" type="text"></label>
+        <label class="ped-f"><span>Previsão de entrega</span><input id="pedPrevisao" type="text" placeholder="ex.: 20 dias"></label>
+        <label class="ped-f"><span>Validade da proposta</span><input id="pedValidade" type="text" placeholder="ex.: 7 dias"></label>
+      </div>
+
+      <div class="ped-sec">Observações</div>
+      <div class="ped-chips">
+        <button type="button" onclick="pedObsSugestao('validade')">+ validade</button>
+        <button type="button" onclick="pedObsSugestao('impostos')">+ impostos</button>
+        <button type="button" onclick="pedObsSugestao('entrega')">+ prazo de entrega</button>
+        <button type="button" onclick="pedObsSugestao('minimo')">+ pedido mínimo</button>
+        <button type="button" onclick="pedObsSugestao('frete')">+ frete</button>
+        <button type="button" onclick="pedObsSugestao('lancamento')">+ lançamentos</button>
+        <button type="button" onclick="pedObsSugestao('troca')">+ avarias</button>
+      </div>
+      <textarea id="pedObs" rows="3" placeholder="Texto livre que sai no rodapé do pedido"></textarea>
+
+      <div class="ped-sec">O que mostrar no documento</div>
+      <div class="ped-opts">
+        <label><input type="checkbox" id="pedFotos"><span>Fotos dos produtos</span></label>
+        <label><input type="checkbox" id="pedDePor"><span>Preço de tabela riscado + economia</span></label>
+        <label><input type="checkbox" id="pedDesc"><span>% de desconto no cabeçalho</span></label>
+        <label><input type="checkbox" id="pedEspecial"><span>Marcar ★ os preços negociados</span></label>
+        <label><input type="checkbox" id="pedOrigem"><span>Coluna Origem (NAC/IMP)</span></label>
+        <label><input type="checkbox" id="pedCx"><span>Coluna CX</span></label>
+        <label><input type="checkbox" id="pedMin"><span>Coluna Pedido mínimo</span></label>
+        <label><input type="checkbox" id="pedEstoque"><span>Coluna Estoque</span></label>
+        <label><input type="checkbox" id="pedEan"><span>Coluna EAN</span></label>
+        <label><input type="checkbox" id="pedEntrega"><span>Coluna Entrega (lançamentos)</span></label>
+        <label><input type="checkbox" id="pedResumo"><span>Separar Linha e Lançamentos</span></label>
+        <label><input type="checkbox" id="pedAssinatura"><span>Campo de assinatura</span></label>
+      </div>
+    </div>
+
+    <div class="ped-foot">
+      <button class="ped-cancel" onclick="fecharPedidoModal()">Cancelar</button>
+      <button class="ped-ok" id="pedGerarBtn" onclick="gerarPedidoDoc(this)">📄 Gerar pedido</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Discount password modal -->
+<div class="disc-pwd-overlay" id="discPwdOverlay" onclick="if(event.target===this)closeDiscPwd()">
+  <div class="disc-pwd-box">
+    <div class="disc-pwd-lock">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <div class="disc-pwd-title">Acesso Comercial</div>
+    <div class="disc-pwd-sub">Área restrita. Insira a senha para liberar os descontos por cluster.</div>
+    <div class="disc-pwd-err" id="discPwdErr">Senha incorreta. Tente novamente.</div>
+    <input class="disc-pwd-input" type="password" id="discPwdInput" placeholder="••••••"
+      onkeydown="if(event.key==='Enter')checkDiscPwd()">
+    <div class="disc-pwd-btns">
+      <button class="disc-pwd-ok" onclick="checkDiscPwd()">🔓 Entrar</button>
+      <button class="disc-pwd-cancel" onclick="closeDiscPwd()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script src="pdf-catalogo.js" defer></script>
 </body>
 </html>
