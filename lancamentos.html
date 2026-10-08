@@ -102,11 +102,15 @@
   body.light .pdf-btn:hover{background:rgba(240,160,48,.25);}
   @media print{
     .sidebar,.filter-bar,.hero,.sb-toggle,.sb-overlay,.modal,.theme-btn,.pdf-btn{display:none!important;}
-    .main{margin-left:0!important;}
+    .main{margin-left:0!important;background:#fff!important;}
     body{background:#fff!important;color:#000!important;}
+    .card-hero-body{background:#fff!important;}
     .content{padding:10px!important;}
     .grid{grid-template-columns:repeat(4,1fr)!important;gap:10px!important;}
-    .destaques-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important;}
+    .destaques-grid{grid-template-columns:repeat(3,1fr)!important;gap:10px!important;}
+    .tag-pill{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .card-hero-desc{color:#444!important;}
+    .card-feat-aviso{color:#9a5b00!important;}
     .card,.card-feat,.card-hero{break-inside:avoid;border:1px solid #ddd!important;background:#fff!important;box-shadow:none!important;animation:none!important;transform:none!important;}
     .card-img,.card-feat-img,.card-hero-img{background:#f5f5f5!important;max-height:140px!important;}
     .card-img-placeholder,.card-feat-img-placeholder,.card-hero-img-placeholder{background:#f5f5f5!important;}
@@ -196,7 +200,7 @@
   .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:35;}
 
   /* ── MAIN ── */
-  .main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;background:var(--th-main-bg);transition:background .35s;}
+  .main{margin-left:var(--sidebar-w);flex:1;min-width:0;min-height:100vh;background:var(--th-main-bg);transition:background .35s;}
 
   /* ── HERO ── */
   .hero{position:relative;padding:52px 48px 36px;background:var(--th-hero-bg);overflow:hidden;border-bottom:1px solid var(--th-hero-border);transition:background .35s,border-color .35s;}
@@ -294,7 +298,22 @@
   .section-title{font-family:'Fredoka',sans-serif;font-size:1rem;font-weight:700;color:var(--th-section-title);text-transform:uppercase;letter-spacing:2px;margin-bottom:18px;display:flex;align-items:center;gap:10px;transition:color .35s;}
   .section-title::after{content:'';flex:1;height:1px;background:var(--th-section-line);transition:background .35s;}
 
-  .destaques-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:36px;}
+  .destaques-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:36px;}
+  @media(max-width:1180px){.destaques-grid{grid-template-columns:1fr 1fr;}}
+
+  /* 2ª onda — selos, aviso e link do título */
+  .tag-pill{display:inline-flex;align-items:center;border-radius:6px;padding:3px 8px;font-size:.58rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;line-height:1.2;white-space:nowrap;}
+  .tag-lanc{background:#A01E1E;}
+  .tag-linha{background:#7B1FA2;}
+  .tag-opo{background:#C2410C;}
+  .card-feat{position:relative;}
+  .card-feat-tag{position:absolute;top:10px;left:10px;z-index:1;}
+  .card-feat-aviso{margin-top:6px;font-size:.62rem;font-weight:700;color:#f0a030;letter-spacing:.2px;}
+  body.light .card-feat-aviso{color:#9a5b00;}
+  .card-hero-badges{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .card-hero-desc{font-size:.85rem;line-height:1.55;color:var(--th-hero-sub);max-width:460px;transition:color .35s;}
+  .section-link{order:2;font-family:'Quicksand',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.2px;text-transform:none;color:var(--gold);text-decoration:none;white-space:nowrap;}
+  .section-link:hover{text-decoration:underline;}
 
   /* Card destaque grande (ocupa 2 colunas) */
   .card-hero{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;border-radius:20px;overflow:hidden;background:var(--th-card-bg);border:1px solid rgba(240,160,48,.25);cursor:pointer;transition:transform .3s,box-shadow .3s,background .35s;animation:fadeUp .5s both;}
@@ -305,7 +324,7 @@
   .card-hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(240,160,48,.2);border:1px solid rgba(240,160,48,.5);border-radius:100px;padding:5px 14px;font-size:.68rem;font-weight:700;color:var(--gold);letter-spacing:.8px;text-transform:uppercase;width:fit-content;}
   .card-hero-ref{font-size:.65rem;color:var(--th-hero-ref);letter-spacing:.5px;transition:color .35s;}
   .card-hero-name{font-family:'Fredoka',sans-serif;font-size:1.6rem;font-weight:700;color:var(--th-hero-name);line-height:1.2;transition:color .35s;}
-  .card-hero-cat{display:inline-block;}
+  .card-hero-cat{display:inline-block;align-self:flex-start;}
   .card-hero-link{display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:#0d0f1a;border-radius:10px;padding:10px 20px;font-size:.78rem;font-weight:700;text-decoration:none;transition:opacity .2s;width:fit-content;margin-top:4px;}
   .card-hero-link:hover{opacity:.85;}
 
@@ -375,7 +394,11 @@
     .hero-rocket{right:16px;font-size:4.5rem;}
     .filter-bar{padding:0 16px;}
     .content{padding:24px 16px 48px;}
-    .destaques-grid{grid-template-columns:1fr;}
+    .destaques-grid{grid-template-columns:1fr 1fr;gap:12px;}
+    .card-feat-img,.card-feat-img-placeholder{height:150px;padding:14px;}
+    .card-feat-body{padding:10px 12px 12px;}
+    .card-feat-name{font-size:.78rem;}
+    .hero-teaser{white-space:normal;}
     .card-hero{grid-template-columns:1fr;}
     .card-hero-img,.card-hero-img-placeholder{height:220px;}
     .card-hero-body{padding:20px;}
@@ -438,7 +461,8 @@
         <div class="sb-cat-arrow">▸</div>
       </div>
       <div class="sb-subs">
-        <a class="sb-sub" href="#" onclick="filterCat('all',null);return false;"><span class="sb-sub-dot" style="background:var(--gold)"></span>Todos<span class="sb-sub-page">47</span></a>
+        <a class="sb-sub" href="#" onclick="filterCat('all',document.querySelector('.filter-btn'));return false;"><span class="sb-sub-dot" style="background:var(--gold)"></span>Todos<span class="sb-sub-page" data-count="all">57</span></a>
+        <a class="sb-sub" href="#" onclick="filterCat('onda2',document.querySelector('.filter-btn[data-f=onda2]'));return false;"><span class="sb-sub-dot" style="background:#A01E1E"></span>2ª Onda<span class="sb-sub-page" data-count="onda2">10</span></a>
       </div>
     </div>
   </nav>
@@ -458,9 +482,9 @@
     <h1 class="hero-title">Lança<span>mentos</span></h1>
     <p class="hero-sub">Os produtos mais novos da Xalingo para 2026.</p>
     <div class="hero-stats">
-      <div><div class="stat-num">47</div><div class="stat-label">Novidades</div></div>
+      <div><div class="stat-num" data-count="all">57</div><div class="stat-label">Novidades</div></div>
       <div><div class="stat-num">5</div><div class="stat-label">Verticais</div></div>
-      <div class="hero-teaser">⏳ Teremos mais lançamentos em 2026 — fique de olho!</div>
+      <div class="hero-teaser">🌊 <span>Chegou a 2ª onda — <span data-count="onda2">10</span> novidades em destaque</span></div>
     </div>
     <div class="hero-rocket" id="heroRocket">
       <div class="exhaust-wrap" id="exhaustWrap"></div>
@@ -469,12 +493,13 @@
   </div>
 
   <div class="filter-bar">
-    <button class="filter-btn active" onclick="filterCat('all',this)">Todos <span class="filter-count">47</span></button>
-    <button class="filter-btn" onclick="filterCat('blocos',this)">Blocos <span class="filter-count">22</span></button>
-    <button class="filter-btn" onclick="filterCat('educativos',this)">Educativos <span class="filter-count">20</span></button>
-    <button class="filter-btn" onclick="filterCat('jogos',this)">Jogos <span class="filter-count">1</span></button>
-    <button class="filter-btn" onclick="filterCat('esportes',this)">Esportes <span class="filter-count">1</span></button>
-    <button class="filter-btn" onclick="filterCat('playground',this)">Playground <span class="filter-count">3</span></button>
+    <button class="filter-btn active" onclick="filterCat('all',this)">Todos <span class="filter-count" data-count="all">57</span></button>
+    <button class="filter-btn" data-f="onda2" onclick="filterCat('onda2',this)">🌊 2ª Onda <span class="filter-count" data-count="onda2">10</span></button>
+    <button class="filter-btn" onclick="filterCat('blocos',this)">Blocos <span class="filter-count" data-count="blocos">22</span></button>
+    <button class="filter-btn" onclick="filterCat('educativos',this)">Educativos <span class="filter-count" data-count="educativos">30</span></button>
+    <button class="filter-btn" onclick="filterCat('jogos',this)">Jogos <span class="filter-count" data-count="jogos">1</span></button>
+    <button class="filter-btn" onclick="filterCat('esportes',this)">Esportes <span class="filter-count" data-count="esportes">1</span></button>
+    <button class="filter-btn" onclick="filterCat('playground',this)">Playground <span class="filter-count" data-count="playground">3</span></button>
   </div>
 
   <div class="print-header" id="printHeader">
@@ -486,7 +511,21 @@
 
 <script>
 const PRODUCTS = [
-  // ── BLOCOS (23) ──
+  // ── 2ª ONDA DE LANÇAMENTOS (10) — em destaque ──
+  // Fonte: https://inovacaoxalingo.github.io/lancamentos/#lancamentos
+  // onda:2 = entra no filtro "2ª Onda" | destaque:"hero" = cartão grande (só 1) | destaque:"feat" = cartão de destaque
+  {ref:"52821",nome:"MULTIBLOCKS COLORIDOS - 50 PÇS",site:"https://produtosxalingo.oneweb.com.br/2023/01/20/multiblocks-colorido-50-pecas/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2023/01/5282.1-MULTIBLOCKS-COLORIDO-EMB-1-1024x926.png",cat:"educativos",idade:"+18 meses",ean:"7896640452827",onda:2,tag:"Revitalização",tagc:"linha",aviso:"Embalagem ajustada",destaque:"hero"},
+  {ref:"20643",nome:"QUEBRA-CABEÇA SUPER COPA - 30 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/06/25/quebra-cabeca-super-copa-30-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/06/2064.3-QC-SUPER-COPA_EMB_1-1024x711.png",cat:"educativos",idade:"+3 anos",ean:"7896640427191",onda:2,tag:"Lançamento",tagc:"lanc",destaque:"feat"},
+  {ref:"20787",nome:"QUEBRA-CABEÇA BOSQUE ENCANTADO - 15 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/08/26/quebra-cabeca-bosque-encantado-15-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/08/2078.7-QUEBRA-CABECA-BOSQUE-ENCANTADO-EMB-1-1-796x1024.png",cat:"educativos",idade:"",ean:"7896640427559",onda:2,tag:"Lançamento",tagc:"lanc",destaque:"feat"},
+  {ref:"20776",nome:"QUEBRA-CABEÇA AMIGOS NAS ALTURAS - 15 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/08/26/quebra-cabeca-amigos-nas-alturas-15-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/08/2077.6-QUEBRA-CABECA-AMIGOS-NAS-ALTURAS-EMB-1-1-796x1024.png",cat:"educativos",idade:"",ean:"7896640427542",onda:2,tag:"Lançamento",tagc:"lanc",destaque:"feat"},
+  {ref:"20765",nome:"QUEBRA-CABEÇA MEU CÃOZINHO CARAMELO - 30 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/08/26/quebra-cabeca-meu-caozinho-caramelo-30-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/08/2076.5-QUEBRA-CABECA-MEU-CAOZINHO-CARAMELO-EMB-1-1-796x1024.png",cat:"educativos",idade:"",ean:"7896640427535",onda:2,tag:"Lançamento",tagc:"lanc",destaque:"feat"},
+  {ref:"20732",nome:"TORRE INTELIGENTE FAZENDINHA",site:"https://produtosxalingo.oneweb.com.br/2026/08/26/torre-inteligente-fazendinha/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/08/20732-TORRE-INTELIGENTE-FAZENDINHA-BRUT-1-1024x1018.png",cat:"educativos",idade:"",ean:"7896640427504",onda:2,tag:"Lançamento",tagc:"lanc",destaque:"feat"},
+  {ref:"20754",nome:"VIRA TORRE",site:"https://produtosxalingo.oneweb.com.br/2026/08/26/vira-torre/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/08/2075.4-VIRA-TORRE-EMB-2-819x1024.png",cat:"educativos",idade:"",ean:"7896640427528",onda:2,tag:"Lançamento",tagc:"lanc",destaque:"feat"},
+  {ref:"20743",nome:"ENCAIXA FORMAS",site:"https://produtosxalingo.oneweb.com.br/2026/08/26/encaixe-formas/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/08/20743-EMCAIXA-FORMAR-BRUT-1-1024x1018.png",cat:"educativos",idade:"",ean:"7896640427511",onda:2,tag:"Lançamento",tagc:"lanc",destaque:"feat"},
+  {ref:"20721",nome:"PINOS DE ENCAIXE",site:"https://produtosxalingo.oneweb.com.br/2026/08/26/pinos-de-encaixe/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/08/20721-PINOS-DE-ENCAIXE-BRUT-1-1024x1018.png",cat:"educativos",idade:"",ean:"7896640427498",onda:2,tag:"Lançamento",tagc:"lanc",destaque:"feat"},
+  {ref:"54721",nome:"MULTIBLOCKS ECO - 44 PÇS",site:"https://produtosxalingo.oneweb.com.br/2023/01/24/multiblocks-eco/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2023/01/5472.1-MULTIBLOCKS-ECO-EMB-3-1024x1024.png",cat:"educativos",idade:"+18 meses",ean:"7896640490348",onda:2,tag:"Oportunidade",tagc:"opo",aviso:"Lote limitado",destaque:"feat"},
+
+  // ── BLOCOS (22) ──
   {ref:"20509",nome:"BRINCANDO DE ENGENHEIRO - 20 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/03/20/2050-9-brincando-de-engenheiro-20-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2050.9-BRINCANDO-DE-ENGENHEIRO-20-PCS-POUCH_MOCKUP-918x1024.png",cat:"blocos",idade:"+3 anos",ean:"7896640426866"},
   {ref:"20165",nome:"BRINCANDO DE ENGENHEIRO 70 ANOS",site:"",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2016.5-BRINCANDO-DE-ENGENHEIRO-70-ANOS-70-embalagem_.png",cat:"blocos",idade:"+3 anos",ean:"7896640425548"},
   {ref:"17921",nome:"BL CRIATIVOS - MONTANHA RUSSA - 56 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/02/19/bl-criativos-montanha-russa/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/17921-BL-CRIATIVOS-MONTANHA-RUSSA-56-PCS-1024x862.png",cat:"blocos",idade:"+6 anos",ean:"7896640419844"},
@@ -510,20 +549,19 @@ const PRODUCTS = [
   {ref:"16921",nome:"BL RACING CAR - CARRO DE CORRIDA - DISPLAY 4 UN 161-174 PÇS",site:"",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/1692.1-BL-RACIN-CAR-CARRO-DE-CORRIDA-DISPLAY-1024x1024.png",cat:"blocos",idade:"+6 anos",ean:"7896640419684"},
   {ref:"17932",nome:"BL QUADRANTE X - PLATAFORMA DE LANÇAMENTO 461 PÇS",site:"",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/BL-QUADRANTE-X-PLATAFORMA-DE-LANCAMENTO-461-PCS-1024x768.png",cat:"blocos",idade:"+6 anos",ean:"7896640419851"},
 
-  // ── EDUCATIVOS (21) ──
-  {ref:"20643",nome:"QUEBRA-CABEÇA SUPER COPA - 30 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/06/25/quebra-cabeca-super-copa-30-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/06/2064.3-QC-SUPER-COPA_EMB_1-1024x711.png",cat:"educativos",idade:"+3 anos",ean:"7896640427191",destaque:"hero"},
+  // ── EDUCATIVOS (20) ──
   {ref:"20221",nome:"BRINCANDO DE MATEMÁTICA PIZZA MULTIPLICAÇÃO",site:"https://produtosxalingo.oneweb.com.br/2023/02/03/quebra-cabecas-aprendendo-o-alfabeto-em-libras/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2022.1-STEAM-DESAFIO-PIZZAIOLO-2-1024x862.png",cat:"educativos",idade:"+6 anos",ean:"7896640426248"},
   {ref:"20232",nome:"PLAYSET PISANDO FUNDO",site:"https://produtosxalingo.oneweb.com.br/2026/02/18/playset-pisando-fundo/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/02/N5_V1_01-730x611.png",cat:"educativos",idade:"+3 anos",ean:"7896640426231"},
   {ref:"20243",nome:"LOUSA E CANETINHAS",site:"https://produtosxalingo.oneweb.com.br/2026/02/19/12047/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2024.3-LOUSA-E-CANETINHA-5-1024x819.png",cat:"educativos",idade:"+3 anos",ean:"7896640426385"},
   {ref:"20510",nome:"QUEBRA-CABEÇA VALE DOS DINOSSAUROS - 15 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/02/27/2051-0-quebra-cabeca-pullpack/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/02/902-20510-QUEBRA-CABECA-EMBALAGEM-POUCH_MOCKUP-730x849.png",cat:"educativos",idade:"+3 anos",ean:"7896640426873"},
-  {ref:"20310",nome:"QUEBRA-CABEÇA EXPLORADORES DO MUNDO - 33 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/02/20/quebra-cabeca-exploradores-do-mundo-33-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/20310-QUBRA-CABECA-EXPLORADORES-DO-MUNDO-MOCKUP-1-1024x722.png",cat:"educativos",idade:"+4 anos",ean:"7896640426521",destaque:"hero"},
+  {ref:"20310",nome:"QUEBRA-CABEÇA EXPLORADORES DO MUNDO - 33 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/02/20/quebra-cabeca-exploradores-do-mundo-33-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/20310-QUBRA-CABECA-EXPLORADORES-DO-MUNDO-MOCKUP-1-1024x722.png",cat:"educativos",idade:"+4 anos",ean:"7896640426521"},
   {ref:"20287",nome:"QUEBRA-CABEÇA FAUNA BRASILEIRA - DISPLAY 12 UN",site:"https://produtosxalingo.oneweb.com.br/2026/02/20/quebra-cabeca-fauna-brasileira-display-12-unid-3pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/20287-QC-DE-ENCAIXE-FAUNA-BRAS-DISPLAY-2-1000x1000-1-1024x819.png",cat:"educativos",idade:"+2 anos",ean:"7896640426484"},
   {ref:"20298",nome:"QUEBRA-CABEÇA VIAGEM ESPACIAL - DISPLAY 12 UN",site:"https://produtosxalingo.oneweb.com.br/2026/02/20/quebra-cabeca-viagem-espacial-display-12-unid-3-4-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/20298-QC-DE-ENCAIXE-VIAGEM-ESPACIAL-DISPLAY-1-1000x1000-1-1024x883.png",cat:"educativos",idade:"+2 anos",ean:"7896640426491"},
   {ref:"20543",nome:"QUEBRA-CABEÇA A PRINCESA E O DRAGÃO - 30 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/03/11/quebra-cabeca-a-princesa-e-o-dragao/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2054.3-QUEBRA-CABECA-A-PRINCESA-E-O-DRAGAO-30-PCS-5-1024x862.png",cat:"educativos",idade:"+4 anos",ean:"7896640426903"},
   {ref:"20554",nome:"QUEBRA-CABEÇA LAGO DAS FADAS - 60 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/03/11/quebra-cabeca-lago-das-fadas/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/N2_-1-730x615.png",cat:"educativos",idade:"+4 anos",ean:"7896640426910"},
   {ref:"20576",nome:"QUEBRA-CABEÇA JARDIM DAS PRINCESAS - 60 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/03/24/quebra-cabeca-jardim-das-princesas-60-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2057.6-QUEBRA-CABECA-JARDIM-DAS-PRINCESAS-60-PCS-1024x862.png",cat:"educativos",idade:"+4 anos",ean:"7896640426934"},
   {ref:"20587",nome:"QUEBRA-CABEÇA GUARDIÃO PLASMA - 60 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/03/24/quebra-cabeca-guardiao-plasma-60-pcs-2/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2058.7-QUEBRA-CABECA-GUARDIAO-PLASMA-60-PCS-4-1024x862.png",cat:"educativos",idade:"+4 anos",ean:"7896640426941"},
-  {ref:"20565",nome:"QUEBRA-CABEÇA PISANDO FUNDO - 60 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/03/11/quebra-cabeca-pisando-fundo-60-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2056.5-QUEBRA-CABECA-PISANDO-FUNDO-60-PCS-1024x862.png",cat:"educativos",idade:"+4 anos",ean:"7896640426927",destaque:"feat"},
+  {ref:"20565",nome:"QUEBRA-CABEÇA PISANDO FUNDO - 60 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/03/11/quebra-cabeca-pisando-fundo-60-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2056.5-QUEBRA-CABECA-PISANDO-FUNDO-60-PCS-1024x862.png",cat:"educativos",idade:"+4 anos",ean:"7896640426927"},
   {ref:"20598",nome:"QUEBRA-CABEÇA PISANDO FUNDO 2X100 - 200 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/03/11/quebra-cabeca-pisando-fundo-2x100-200-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2059.8-QUEBRA-CABECA-PISANDO-FUNDO-2X100-200-PCS-1024x926.png",cat:"educativos",idade:"+4 anos",ean:"7896640426958"},
   {ref:"20521",nome:"MEMÓRIA BICHINHOS DA FAZENDA - 20 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/02/27/memoria-pullpack/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/02/20521-MEMORIA-EMBALAGEM-POUCH-MOCKUP-730x821.png",cat:"educativos",idade:"+3 anos",ean:"7896640426880"},
   {ref:"20387",nome:"MEMÓRIA PISANDO FUNDO - 24 PÇS",site:"https://produtosxalingo.oneweb.com.br/2026/02/19/memoria-pisando-fundo-24-pcs/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/N1_V1_01-edited-2048x1638.png",cat:"educativos",idade:"+3 anos",ean:"7896640426590"},
@@ -540,7 +578,7 @@ const PRODUCTS = [
   {ref:"20432",nome:"TABELA DE BASQUETE PLAY",site:"https://produtosxalingo.oneweb.com.br/2026/02/19/tabela-de-basquete-play/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/02/20432-TABELA-BASQUETE-PLAY-4-730x730.png",cat:"esportes",idade:"+3 anos",ean:"7896640426682"},
 
   // ── PLAYGROUND (3) ──
-  {ref:"20621",nome:"CASTELO REAL",site:"https://produtosxalingo.oneweb.com.br/2026/03/24/castelo-real/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2062.1-castela-real-934x1024.png",cat:"playground",idade:"+2 anos",ean:"7896640426989",destaque:"feat"},
+  {ref:"20621",nome:"CASTELO REAL",site:"https://produtosxalingo.oneweb.com.br/2026/03/24/castelo-real/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2062.1-castela-real-934x1024.png",cat:"playground",idade:"+2 anos",ean:"7896640426989"},
   {ref:"20610",nome:"CASTELO ENCANTADO",site:"https://produtosxalingo.oneweb.com.br/2026/03/24/castelo-encantado/",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/03/2061.0-castelo-encantado-1009x1024.png",cat:"playground",idade:"+2 anos",ean:"7896640426972"},
   {ref:"20609",nome:"UNIVERSO DOS FOFOSSAUROS",site:"",img:"https://produtosxalingo.oneweb.com.br/wp-content/uploads/2026/02/Untitled2-730x565.png",cat:"playground",idade:"3 a 8 anos",ean:"7896640426965"},
 ];
@@ -549,6 +587,16 @@ const CAT_LABELS={blocos:'Blocos',educativos:'Educativos',jogos:'Jogos',esportes
 const CAT_ICONS ={blocos:'🧱',educativos:'📚',jogos:'♟️',esportes:'⚽',playground:'🛝'};
 
 const DESCS = {
+  // 2ª onda
+  "20787": "Quebra-cabeça de 15 peças grandes, no tamanho certo para as primeiras montagens. Cena ilustrada de bosque encantado.",
+  "20776": "Quebra-cabeça de 15 peças para a criança montar sozinha, com ilustração colorida e peças fáceis de manusear.",
+  "20765": "O passo seguinte às montagens de 15 peças: 30 peças com o cãozinho caramelo, tema que a criança reconhece de cara.",
+  "20732": "Torre de empilhar com tema fazendinha: ordem de tamanhos, cores e os bichos que a criança já conhece.",
+  "20754": "Monta, desmonta e começa de novo. Brincadeira de equilíbrio e coordenação que funciona sozinha ou em grupo.",
+  "20743": "Cada forma no seu lugar: reconhecimento de formas geométricas, cores e coordenação motora fina.",
+  "20721": "Pinos coloridos para encaixar, empilhar e combinar. Brincadeira aberta, sem regra fixa, para a primeira infância.",
+  "52821": "Clássico da linha em nova paleta: 50 peças em 9 formatos, madeira reflorestada e tinta atóxica, na maletinha para levar junto. A partir de 18 meses.\n\n⚠️ Atenção · embalagem ajustada\nNovo tamanho de embalagem e cores novas, tanto do produto quanto da embalagem. Confira as medidas antes de montar o pedido.",
+  "54721": "44 peças em madeira reflorestada e embalagem que vira maleta. Formas e tamanhos variados para classificar, comparar e construir. A partir de 18 meses.\n\n⚠️ Oportunidade · lote limitado\nLote especial com quantidade limitada. Garanta na hora do pedido — não há reposição prevista.",
   "20643": "Monte, pinte e celebre cada jogada! ⚽🎨\n\nO Quebra-Cabeça Super Copa para Colorir une duas brincadeiras em uma só: primeiro a criança monta o quebra-cabeça e depois dá vida à cena com suas próprias cores.\n\nCom ilustrações temáticas de futebol, o produto estimula a criatividade, coordenação motora e concentração, tornando o momento de brincar ainda mais divertido e educativo.\n\nAcompanha canetinhas coloridas para personalizar o desenho e criar uma arte única!",
   "20509": "Um clássico que atravessa gerações! 🧱✨\n\nO Brincando de Engenheiro convida a criança a soltar a imaginação e criar diferentes construções com blocos de madeira, explorando formas, encaixes e possibilidades infinitas.\n\nCom peças inspiradas em estruturas reais, o brinquedo estimula o raciocínio lógico, coordenação motora, criatividade e percepção espacial, proporcionando uma experiência completa de aprendizado através do brincar.\n\nSeu formato compacto é ideal para levar a diversão para qualquer lugar, tornando cada momento uma nova oportunidade de criar.\n\nProduzido em madeira reflorestada, com peças resistentes e seguras para as crianças.",
   "20165": "Um clássico que atravessa gerações, agora em edição especial! 🧱✨\n\nO Brincando de Engenheiro – 70 anos celebra a história de um dos brinquedos mais icônicos, proporcionando uma experiência única de construção, criatividade e nostalgia.\n\nCom peças de madeira que permitem inúmeras combinações, a criança pode criar casas, castelos e cidades inteiras, desenvolvendo raciocínio lógico, coordenação motora, percepção espacial e criatividade de forma natural e divertida.\n\nUma edição comemorativa que resgata o valor do brincar de verdade, conectando diferentes gerações por meio da imaginação.\n\nProduzido em madeira reflorestada, com peças resistentes, seguras e duráveis.",
@@ -602,7 +650,32 @@ const DESCS = {
 // Injeta desc em cada produto
 PRODUCTS.forEach(p => { if(DESCS[p.ref]) p.desc = DESCS[p.ref]; });
 
+// Medidas da 2ª onda (C × L × A, mm) — Relatório Produto 360, 06/10/2026. Aparecem no fim da descrição.
+const MEDIDAS = {
+  "20643":{emb:[300,60,180], cx:[370,190,310], qtd:6},
+  "20787":{emb:[180,60,120], cx:[370,190,250], qtd:12},
+  "20776":{emb:[180,60,120], cx:[370,190,250], qtd:12},
+  "20765":{emb:[180,60,120], cx:[370,190,250], qtd:12},
+  "20732":{emb:[180,60,180], cx:[370,190,190], qtd:6},
+  "20754":{emb:[185,55,40],  cx:[245,115,190], qtd:12},
+  "20743":{emb:[180,60,180], cx:[370,190,190], qtd:6},
+  "20721":{emb:[180,60,180], cx:[370,190,190], qtd:6},
+  "52821":{emb:[300,60,240], cx:[370,250,310], qtd:6},
+  "54721":{emb:[240,80,150], cx:[310,255,245], qtd:6}
+};
+PRODUCTS.forEach(p => {
+  const m = MEDIDAS[p.ref]; if(!m) return;
+  const l = [];
+  if(m.emb) l.push('Embalagem: ' + m.emb.join(' × ') + ' mm');
+  if(m.cx)  l.push('Caixa master: ' + m.cx.join(' × ') + ' mm' + (m.qtd ? ' · ' + m.qtd + ' un.' : ''));
+  if(l.length) p.desc = (p.desc ? p.desc + '\n\n' : '') + '📏 Medidas (C × L × A)\n' + l.join('\n');
+});
+
 const DELIVERY = {
+  "20643":"Pronta entrega","20787":"Pronta entrega","20776":"Pronta entrega",
+  "20765":"Pronta entrega","20732":"Pronta entrega","20754":"Pronta entrega",
+  "20743":"Pronta entrega","20721":"Pronta entrega","52821":"Pronta entrega",
+  "54721":"Pronta entrega",
   "20298":"01/04/2026","20287":"01/04/2026","20432":"01/04/2026",
   "17865":"30/09/2026","16909":"30/09/2026","17921":"30/09/2026",
   "17910":"30/09/2026","17843":"30/09/2026","16954":"30/09/2026",
@@ -629,7 +702,7 @@ function openModal(ref){
 
   const mc = document.getElementById('modal-content');
   mc.innerHTML = p.img
-    ? `<img class="modal-img" src="${p.img}" alt="${p.nome}" loading="lazy">`
+    ? `<img class="modal-img" src="${p.img}" alt="${p.nome}" loading="lazy" ${IMG_FALLBACK}>`
     : `<div class="modal-await"><span>📷</span>Aguardar</div>`;
 
   document.getElementById('modal-ref').textContent = 'REF ' + p.ref;
@@ -673,17 +746,24 @@ function closeModal(){
 }
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
 
+// Se o recorte do WordPress (-1024x819) não existir mais, tenta o arquivo original
+const IMG_FALLBACK = 'onerror="this.onerror=null;this.src=this.src.replace(/-\\d+x\\d+(\\.(?:png|jpe?g|webp))$/i,\'$1\')"';
+const tagPill = (p, extra='') => p.tag ? `<span class="tag-pill tag-${p.tagc||'lanc'} ${extra}">${p.tag}</span>` : '';
+
 function cardHero(p){
   const imgEl = p.img
-    ? `<img class="card-hero-img" src="${p.img}" alt="${p.nome}" loading="lazy">`
+    ? `<img class="card-hero-img" src="${p.img}" alt="${p.nome}" loading="lazy" ${IMG_FALLBACK}>`
     : `<div class="card-hero-img-placeholder">${CAT_ICONS[p.cat]||'📦'}</div>`;
+  const resumo = (DESCS[p.ref] || '').split('\n\n')[0];
   return `
   <div class="card-hero" onclick="openModal('${p.ref}')">
     ${imgEl}
     <div class="card-hero-body">
-      <div class="card-hero-badge">⭐ Destaque</div>
+      <div class="card-hero-badges"><div class="card-hero-badge">⭐ Destaque${p.onda===2?' · 2ª onda':''}</div>${tagPill(p)}</div>
       <div class="card-hero-ref">REF ${p.ref}</div>
       <div class="card-hero-name">${p.nome}</div>
+      ${resumo && resumo.length <= 200 ? `<div class="card-hero-desc">${resumo}</div>` : ''}
+      ${p.aviso ? `<div class="card-feat-aviso">⚠ ${p.aviso}</div>` : ''}
       <span class="card-cat card-hero-cat cat-${p.cat}">${CAT_LABELS[p.cat]}</span>
     </div>
   </div>`;
@@ -691,14 +771,16 @@ function cardHero(p){
 
 function cardFeat(p, delay){
   const imgEl = p.img
-    ? `<img class="card-feat-img" src="${p.img}" alt="${p.nome}" loading="lazy">`
+    ? `<img class="card-feat-img" src="${p.img}" alt="${p.nome}" loading="lazy" ${IMG_FALLBACK}>`
     : `<div class="card-feat-img-placeholder">${CAT_ICONS[p.cat]||'📦'}</div>`;
   return `
   <div class="card-feat" style="animation-delay:${delay}ms" onclick="openModal('${p.ref}')">
+    ${tagPill(p, 'card-feat-tag')}
     ${imgEl}
     <div class="card-feat-body">
       <div class="card-feat-ref">REF ${p.ref}</div>
       <div class="card-feat-name">${p.nome}</div>
+      ${p.aviso ? `<div class="card-feat-aviso">⚠ ${p.aviso}</div>` : ''}
     </div>
   </div>`;
 }
@@ -706,7 +788,7 @@ function cardFeat(p, delay){
 function cardNormal(p, delay){
   const soon = !p.img;
   const imgEl = p.img
-    ? `<img class="card-img" src="${p.img}" alt="${p.nome}" loading="lazy">`
+    ? `<img class="card-img" src="${p.img}" alt="${p.nome}" loading="lazy" ${IMG_FALLBACK}>`
     : `<div class="card-img-placeholder">${CAT_ICONS[p.cat]||'📦'}</div>`;
   return `
   <div class="card" style="animation-delay:${delay}ms" onclick="openModal('${p.ref}')">
@@ -723,8 +805,17 @@ function cardNormal(p, delay){
   </div>`;
 }
 
+const filtrar = f => f==='all' ? PRODUCTS
+  : f==='onda2' ? PRODUCTS.filter(p=>p.onda===2)
+  : PRODUCTS.filter(p=>p.cat===f);
+
+// Contadores do topo, dos filtros e da sidebar saem da lista de produtos
+function syncCounts(){
+  document.querySelectorAll('[data-count]').forEach(el => { el.textContent = filtrar(el.dataset.count).length; });
+}
+
 function renderContent(filter){
-  const filtered = filter==='all' ? PRODUCTS : PRODUCTS.filter(p=>p.cat===filter);
+  const filtered = filtrar(filter);
   const hero   = filtered.filter(p=>p.destaque==='hero');
   const feat   = filtered.filter(p=>p.destaque==='feat');
   const normal = filtered.filter(p=>!p.destaque);
@@ -732,7 +823,8 @@ function renderContent(filter){
   let html = '';
 
   if(hero.length || feat.length){
-    html += '<div class="section-title">Em Destaque</div>';
+    const soOnda2 = hero.concat(feat).every(p=>p.onda===2);
+    html += `<div class="section-title">Em Destaque${soOnda2 ? ' · 2ª Onda de Lançamentos' : ''}</div>`;
     html += '<div class="destaques-grid">';
     hero.forEach(p => html += cardHero(p));
     feat.forEach((p,i) => html += cardFeat(p, i*80));
@@ -820,6 +912,7 @@ function toggleTheme(){
   });
 })();
 
+syncCounts();
 renderContent('all');
 
 function exportarPDF(){
