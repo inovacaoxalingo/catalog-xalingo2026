@@ -3,8 +3,7 @@
    --------------------------------------------------------------------------
    Monta, no próprio navegador, um único PDF com:
      capa  →  sumário (gerado, com links clicáveis)  →  as 7 categorias
-   Os selos de preço são desenhados como TEXTO VETORIAL (pesquisável no PDF),
-   respeitando a faixa de ICMS / EXP-IND selecionada na hora.
+   Catálogo SEM PREÇOS: nenhum valor, tabela ou ICMS entra no PDF.
 
    Uso: <script src="pdf-catalogo.js" defer></script>
         <button onclick="XalingoPDF.abrir()">…</button>
@@ -27,7 +26,7 @@
 
   var CAPA = 'capa.jpg';
 
-  // Lançamentos: só a 2ª onda, lida da página dela (mesmo domínio github.io), com preços,
+  // Lançamentos: só a 2ª onda, lida da página dela (mesmo domínio github.io), com
   // fotos, medidas e avisos. Entram logo depois do sumário, 2 produtos por página.
   // Se a página não responder, usa os itens onda:2 da lancamentos.html deste catálogo.
   var LANCAMENTOS = {
@@ -50,14 +49,6 @@
     leve:  { rotulo: 'Leve',  larguraMax: 900,  jpeg: 0.72, nota: 'para mandar por e-mail · ~20 MB' }
   };
 
-  var ROTULO_ICMS = {
-    p18:    { arquivo: 'ICMS18',  texto: 'ICMS 18%' },
-    p12rs:  { arquivo: 'ICMS12RS', texto: 'ICMS 12% RS' },
-    p12:    { arquivo: 'ICMS12',  texto: 'ICMS 12% SC/PR/SP' },
-    p7:     { arquivo: 'ICMS7',   texto: 'ICMS 7%' },
-    expind: { arquivo: 'EXP-IND', texto: 'Exportação Indireta' }
-  };
-
   var CDNS = [
     'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js',
     'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js',
@@ -72,16 +63,6 @@
   function limpar(s) {
     return String(s == null ? '' : s).replace(/[‐‑−]/g, '-')
       .replace(/[^\x20-\xFF–—‘’“”•…€]/g, '').replace(/\s{2,}/g, ' ').trim();
-  }
-
-  function preco(valor, icms) {
-    if (valor > 0) return 'R$ ' + valor.toFixed(2).replace('.', ',');
-    return icms === 'expind' ? 'Sob consulta' : 'Aguardar';
-  }
-
-  function icmsAtual() {
-    var exp = localStorage.getItem('xalingo-expind') === '1';
-    return exp ? 'expind' : (localStorage.getItem('xalingo-icms') || 'p18');
   }
 
   function carregarScript(urls, i) {
@@ -136,18 +117,6 @@
       return { url: new URL(src, location.href).href, chave: src.split('/').pop().replace(/\.[a-z]+$/i, '') };
     });
 
-    var precos = {};
-    var lit = recortarLiteral(html, 'PRICE_CONFIG', '{', '}');
-    if (lit) { try { precos = new Function('return ' + lit)(); } catch (e) { precos = {}; } }
-
-    var ocultas = {};
-    var litOc = recortarLiteral(html, 'REFS_OCULTAS', '[', ']');
-    if (litOc) {
-      try {
-        (new Function('return ' + litOc)() || []).forEach(function (r) { ocultas[r] = 1; });
-      } catch (e) { /* segue sem ocultar */ }
-    }
-
     // âncora de seção -> índice da imagem onde a seção começa
     var ancoras = {};
     Array.prototype.forEach.call(doc.querySelectorAll('.section-anchor[id]'), function (a) {
@@ -157,23 +126,9 @@
       if (idx >= 0) ancoras[a.id] = idx;
     });
 
-    // ref -> índice da página em que o selo aparece
-    var selosPorPagina = paginas.map(function () { return []; });
-    Object.keys(precos).forEach(function (ref) {
-      if (ocultas[ref]) return;
-      var d = precos[ref];
-      if (!d || !d.img) return;
-      var alvo = -1;
-      for (var i = 0; i < paginas.length; i++) {
-        if (paginas[i].chave === d.img) { alvo = i; break; }
-        if (alvo < 0 && paginas[i].chave.indexOf(d.img) >= 0) alvo = i;
-      }
-      if (alvo >= 0) selosPorPagina[alvo].push({ ref: ref, d: d });
-    });
-
     var secoes = secoesDe(doc, cat.arquivo)[cat.arquivo.toLowerCase()] || [];
 
-    return { cat: cat, paginas: paginas, selos: selosPorPagina, ancoras: ancoras, secoes: secoes };
+    return { cat: cat, paginas: paginas, ancoras: ancoras, secoes: secoes };
   }
 
   // Nomes das seções: links "arquivo.html#ancora" da sidebar (verticais) ou do sumário.
@@ -233,7 +188,6 @@
       var html = await lerTexto(LANCAMENTOS.fonte);
       var prods = avaliarLiteral(html, 'PRODUTOS', '[', ']');
       if (!prods || !prods.length) throw new Error('sem PRODUTOS');
-      var precos = avaliarLiteral(html, 'PRECOS', '{', '}') || {};
       var logist = avaliarLiteral(html, 'LOGISTICA', '{', '}') || {};
       var secoes = avaliarLiteral(html, 'SECOES', '[', ']') || [{ id: '*', titulo: '2ª onda de lançamentos' }];
       var mB = /const\s+B\s*=\s*["']([^"']+)["']/.exec(html);
@@ -247,7 +201,6 @@
           desc: p.desc || x.desc || '',
           aviso: p.aviso ? (typeof p.aviso === 'string' ? { titulo: p.aviso, texto: '' } : p.aviso) : null,
           fotos: (p.imgs || []).slice(0, LANCAMENTOS.fotos).map(function (f) { return /^https?:/.test(f) ? f : base + f; }),
-          preco: precos[p.ref] || null,
           log: logist[p.ref] || x.log || null,
           idade: x.idade || '',
           entrega: x.entrega || (p.estoque !== false ? 'Pronta entrega' : ''),
@@ -269,7 +222,7 @@
           var p = x.p;
           return { ref: p.ref, proj: '', nome: p.nome, tag: p.tag || 'Lançamento', tagc: p.tagc || 'lanc',
                    ean: p.ean || '', desc: x.desc, aviso: p.aviso ? { titulo: p.aviso, texto: '' } : null,
-                   fotos: p.img ? [p.img] : [], preco: null, log: x.log, idade: x.idade,
+                   fotos: p.img ? [p.img] : [], log: x.log, idade: x.idade,
                    entrega: x.entrega, estoque: x.entrega === 'Pronta entrega' };
         });
       return lista.length ? [{ id: 'onda2', titulo: '2ª onda de lançamentos', itens: lista }] : [];
@@ -344,13 +297,12 @@
   function mm(a) { return a && a.length ? a.join(' × ') + ' mm' : ''; }
 
   // Desenha as páginas de lançamentos a partir do índice `inicio` (0 = primeira página do PDF)
-  async function desenharLancamentos(pdf, PDFLib, fonte, fonteNeg, grupos, fotos, inicio, icms) {
+  async function desenharLancamentos(pdf, PDFLib, fonte, fonteNeg, grupos, fotos, inicio) {
     var rgb = PDFLib.rgb;
     var navy = rgb(0.106, 0.227, 0.361), creme = rgb(0.961, 0.898, 0.839), ouro = rgb(0.941, 0.627, 0.188);
     var branco = rgb(1, 1, 1), cinzaFoto = rgb(0.965, 0.957, 0.945), linha = rgb(0.86, 0.82, 0.76);
     var M = 28, VAO = 14, TOPO = PH - 80, BASE = 34;
     var bw = PW - M * 2, bh = (TOPO - BASE - VAO) / 2;
-    var rotIcms = (ROTULO_ICMS[icms] || ROTULO_ICMS.p18).texto;
     var cache = {}, idx = inicio;
 
     function cor(a) { return rgb(a[0], a[1], a[2]); }
@@ -385,10 +337,8 @@
         page.drawRectangle({ x: 0, y: PH - 63, width: PW, height: 3, color: ouro });
         texto(page, 'LANÇAMENTOS 2026 · 2ª ONDA', M, PH - 33, 16, fonteNeg, branco);
         texto(page, grupo.titulo + (nPag > 1 ? '  ·  ' + (pg + 1) + '/' + nPag : ''), M, PH - 49, 9, fonteNeg, ouro);
-        var rot = limpar('Preços: ' + rotIcms + ' · sem IPI');
-        texto(page, rot, PW - M - fonteNeg.widthOfTextAtSize(rot, 8), PH - 33, 8, fonteNeg, rgb(0.973, 0.769, 0));
         var marca = 'Xalingo Brinquedos';
-        texto(page, marca, PW - M - fonte.widthOfTextAtSize(marca, 7.5), PH - 49, 7.5, fonte, branco, 0.7);
+        texto(page, marca, PW - M - fonte.widthOfTextAtSize(marca, 8), PH - 33, 8, fonte, branco, 0.7);
 
         var itens = grupo.itens.slice(pg * LANCAMENTOS.porPagina, (pg + 1) * LANCAMENTOS.porPagina);
         for (var i = 0; i < itens.length; i++) {
@@ -436,13 +386,13 @@
           });
           cy -= 3;
 
-          // rodapé do bloco: preço + ficha técnica (desenhados de baixo para cima)
+          // rodapé do bloco: ficha técnica (desenhados de baixo para cima)
           var fichas = [
             ['EAN', p.ean], ['Idade', p.idade], ['Embalagem', mm(p.log && p.log.emb)],
             ['Caixa master', mm(p.log && p.log.cx)], ['Qtd / caixa', p.log && p.log.qtd ? p.log.qtd + ' un.' : ''],
             ['Entrega', p.entrega]
           ].filter(function (f) { return f[1]; });
-          var colW = (cw - 10) / 2, linhaH = 22, nLin = Math.ceil(fichas.length / 2);
+          var colW = (cw - 10) / 2, linhaH = 26, nLin = Math.ceil(fichas.length / 2);
           var fichaTopo = y + P + nLin * linhaH;
           fichas.forEach(function (f, k) {
             var fxk = cx + (k % 2) * (colW + 10), fyk = fichaTopo - Math.floor(k / 2) * linhaH;
@@ -451,19 +401,8 @@
             texto(page, quebrarLinhas(limpar(f[1]), fonteNeg, 8.4, colW, 1)[0] || '', fxk, fyk - 17, 8.4, fonteNeg, navy);
           });
 
-          var valor = p.preco && typeof p.preco[icms] === 'number' && p.preco[icms] > 0 ? p.preco[icms] : null;
-          var pTopo = fichaTopo + 8 + 38;
-          page.drawRectangle({ x: cx, y: pTopo - 38, width: cw, height: 38, color: navy });
-          texto(page, 'PREÇO UNITÁRIO · ' + rotIcms.toUpperCase() + ' · SEM IPI', cx + 10, pTopo - 13, 6.2, fonteNeg, branco, 0.7);
-          var vtxt = valor ? 'R$ ' + valor.toFixed(2).replace('.', ',') : 'Sob consulta';
-          texto(page, vtxt, cx + 10, pTopo - 31, valor ? 16 : 12, fonteNeg, valor ? rgb(1, 0.85, 0.45) : branco);
-          if (p.log && p.log.qtd && valor) {
-            var cxTxt = 'Caixa com ' + p.log.qtd + ' un.: R$ ' + (valor * p.log.qtd).toFixed(2).replace('.', ',');
-            texto(page, cxTxt, cx + cw - 10 - fonte.widthOfTextAtSize(limpar(cxTxt), 7.4), pTopo - 29, 7.4, fonte, branco, 0.8);
-          }
-
-          // aviso (acima do preço) e descrição no espaço que sobrar
-          var limite = pTopo + 8;
+          // aviso logo acima da ficha técnica; descrição ocupa o espaço que sobrar
+          var limite = fichaTopo + 10;
           var avisoLinhas = [], avH = 0;
           if (p.aviso) {
             avisoLinhas = quebrarLinhas(limpar(p.aviso.texto), fonte, 7.4, cw - 18, 3);
@@ -484,7 +423,7 @@
           }
         }
 
-        texto(page, 'Preços sujeitos a alteração sem aviso prévio · medidas C × L × A', M, 18, 7, fonte, navy, 0.45);
+        texto(page, 'Medidas em mm (C \u00d7 L \u00d7 A) \u00b7 imagens ilustrativas', M, 18, 7, fonte, navy, 0.45);
       }
     }
     return idx - inicio;
@@ -506,44 +445,9 @@
     return new Uint8Array(await saida.arrayBuffer());
   }
 
-  /* ── Desenho do selo de preço ─────────────────────────────────────────── */
-
-  function desenharSelo(page, fonte, fonteNeg, rgb, item, icms) {
-    var d = item.d;
-    var texto = limpar(preco(d[icms], icms));
-    var ref = limpar(item.ref);
-    var importado = icms === 'expind' && (d.origem || 'IMP') === 'IMP';
-    var aviso = importado ? 'IMPORTADO \u00b7 taxas dif.' : null;
-
-    var fRef = 6.2, fVal = 10.4, fAviso = 5.4, padX = 5.6, padY = 3.2, vao = 1.4;
-
-    var larg = Math.max(
-      fonte.widthOfTextAtSize(ref, fRef),
-      fonteNeg.widthOfTextAtSize(texto, fVal),
-      aviso ? fonteNeg.widthOfTextAtSize(aviso, fAviso) : 0
-    ) + padX * 2;
-    var alt = padY * 2 + fRef + vao + fVal + (aviso ? vao + fAviso : 0);
-
-    var x = Math.min(Math.max(d.x / 100 * PW, 3), PW - larg - 3);
-    var y = Math.min(Math.max(PH - (d.y / 100 * PH) - alt, 3), PH - alt - 3);
-
-    var fundo = icms === 'expind' ? rgb(0.055, 0.431, 0.353) : rgb(0.627, 0.118, 0.118);
-
-    page.drawRectangle({ x: x, y: y, width: larg, height: alt, color: fundo, opacity: 0.88 });
-
-    var cur = y + alt - padY - fRef * 0.82;
-    page.drawText(ref, { x: x + padX, y: cur, size: fRef, font: fonte, color: rgb(1, 1, 1), opacity: 0.62 });
-    cur -= fRef * 0.18 + vao + fVal * 0.82;
-    page.drawText(texto, { x: x + padX, y: cur, size: fVal, font: fonteNeg, color: rgb(1, 1, 1) });
-    if (aviso) {
-      cur -= fVal * 0.18 + vao + fAviso * 0.82;
-      page.drawText(aviso, { x: x + padX, y: cur, size: fAviso, font: fonteNeg, color: rgb(1, 0.874, 0.541) });
-    }
-  }
-
   /* ── Sumário gerado (vetorial, com links) ─────────────────────────────── */
 
-  function montarSumario(pdf, PDFLib, fonte, fonteNeg, plano, secoes, icms) {
+  function montarSumario(pdf, PDFLib, fonte, fonteNeg, plano, secoes) {
     var rgb = PDFLib.rgb;
     var page = pdf.insertPage(1);
     page.setSize(PW, PH);
@@ -553,12 +457,6 @@
     page.drawRectangle({ x: 0, y: PH - 92, width: PW, height: 92, color: navy });
     page.drawText('CAT\u00c1LOGO 2026', { x: 44, y: PH - 50, size: 22, font: fonteNeg, color: rgb(1, 1, 1) });
     page.drawText('Xalingo Brinquedos \u00b7 78 anos', { x: 44, y: PH - 68, size: 9, font: fonte, color: rgb(1, 1, 1), opacity: 0.75 });
-    var rot = limpar('Pre\u00e7os: ' + (ROTULO_ICMS[icms] || ROTULO_ICMS.p18).texto);
-    page.drawText(rot, {
-      x: PW - 44 - fonteNeg.widthOfTextAtSize(rot, 9),
-      y: PH - 50, size: 9, font: fonteNeg, color: rgb(0.973, 0.769, 0)
-    });
-
     var MARGEM = 44, VAO = 26, TOPO = PH - 126, BASE = 64;
     var H_CAT = 18, H_SUB = 12.5, VAO_CAT = 10;
     var links = [];
@@ -598,9 +496,9 @@
       page.drawRectangle({ x: px, y: TOPO - 108, width: pw, height: 116, color: rgb(1, 1, 1), opacity: 0.55 });
       page.drawRectangle({ x: px, y: TOPO + 8, width: pw, height: 2.5, color: navy });
       var linhas = [
-        ['Faixa aplicada', (ROTULO_ICMS[icms] || ROTULO_ICMS.p18).texto],
+        ['Edi\u00e7\u00e3o', 'Cat\u00e1logo Digital 2026'],
         ['P\u00e1ginas', String(pdf.getPageCount())],
-        ['Pre\u00e7os', 'por unidade (R$)']
+        ['Navega\u00e7\u00e3o', 'clique no sum\u00e1rio']
       ];
       var ly = TOPO - 14;
       linhas.forEach(function (l) {
@@ -649,7 +547,7 @@
     });
 
     page.drawText(limpar('Gerado em ' + new Date().toLocaleDateString('pt-BR') +
-      ' \u00b7 pre\u00e7os sujeitos a altera\u00e7\u00e3o sem aviso pr\u00e9vio'), {
+      ' \u00b7 imagens ilustrativas'), {
       x: 44, y: 40, size: 7.5, font: fonte, color: navy, opacity: 0.45
     });
 
@@ -696,11 +594,6 @@
       '.xpdf-rot{font-size:.62rem;font-weight:800;color:#1B3A5C;opacity:.6;text-transform:uppercase;',
       'letter-spacing:.6px;margin:2px 0 7px}',
       '.xpdf-rot span{text-transform:none;letter-spacing:0;font-weight:600;opacity:.8;margin-left:4px}',
-      '.xpdf-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}',
-      '.xpdf-chip{font-family:inherit;font-size:.68rem;font-weight:700;padding:5px 10px;border-radius:20px;',
-      'border:1.5px solid rgba(27,58,92,.18);background:#fff;color:#1B3A5C;cursor:pointer;transition:.15s}',
-      '.xpdf-chip:hover{border-color:#1B3A5C}',
-      '.xpdf-chip.on{background:#1B3A5C;border-color:#1B3A5C;color:#fff}',
       '.xpdf-chk{display:flex;align-items:center;gap:8px;font-size:.76rem;font-weight:600;color:#1B3A5C;',
       'background:#fff;border:1.5px solid rgba(27,58,92,.16);border-radius:11px;padding:9px 12px;margin-bottom:14px;cursor:pointer}',
       '.xpdf-chk input{width:15px;height:15px;accent-color:#1B3A5C;cursor:pointer}'
@@ -725,11 +618,6 @@
   }
 
   function abrir() {
-    var icms = icmsAtual();
-    var chips = Object.keys(ROTULO_ICMS).map(function (k) {
-      return '<button class="xpdf-chip' + (k === icms ? ' on' : '') + '" data-icms="' + k + '">' +
-             ROTULO_ICMS[k].texto + '</button>';
-    }).join('');
     var ops = Object.keys(QUALIDADES).map(function (k) {
       var q = QUALIDADES[k];
       return '<button class="xpdf-op" data-q="' + k + '"><b>' + q.rotulo + '</b><span>' + q.nota + '</span></button>';
@@ -737,37 +625,28 @@
     var f = caixa(
       '<div class="xpdf-tit">Baixar o catálogo completo</div>' +
       '<div class="xpdf-sub">Capa, sumário e as 7 categorias num PDF só.</div>' +
-      '<div class="xpdf-rot">Tabela de preços</div>' +
-      '<div class="xpdf-chips">' + chips + '</div>' +
-      '<label class="xpdf-chk"><input type="checkbox" id="xpdf-lanc" checked> Incluir os <b>lançamentos da 2ª onda</b> logo após o sumário</label>' +
+      '<label class="xpdf-chk"><input type="checkbox" id="xpdf-lanc" checked><span>Incluir os <b>lançamentos da 2ª onda</b> logo após o sumário</span></label>' +
       '<div class="xpdf-rot">Qualidade <span>quanto maior, mais demora e mais pesa</span></div>' +
       ops +
       '<button class="xpdf-fech">Cancelar</button>'
     );
     f.querySelector('.xpdf-fech').onclick = fechar;
     f.addEventListener('click', function (e) { if (e.target === f) fechar(); });
-    Array.prototype.forEach.call(f.querySelectorAll('.xpdf-chip'), function (b) {
-      b.onclick = function () {
-        icms = b.getAttribute('data-icms');
-        Array.prototype.forEach.call(f.querySelectorAll('.xpdf-chip'), function (o) { o.classList.toggle('on', o === b); });
-      };
-    });
     Array.prototype.forEach.call(f.querySelectorAll('.xpdf-op'), function (b) {
       b.onclick = function () {
         var chk = document.getElementById('xpdf-lanc');
-        gerar(b.getAttribute('data-q'), icms, { lancamentos: !chk || chk.checked });
+        gerar(b.getAttribute('data-q'), { lancamentos: !chk || chk.checked });
       };
     });
   }
 
   /* ── Geração ──────────────────────────────────────────────────────────── */
 
-  async function gerar(nivel, icmsEscolhido, opcoes) {
+  async function gerar(nivel, opcoes) {
     opcoes = opcoes || {};
     var comLanc = opcoes.lancamentos !== false;
     cancelado = false;
     var q = QUALIDADES[nivel] || QUALIDADES.media;
-    var icms = ROTULO_ICMS[icmsEscolhido] ? icmsEscolhido : icmsAtual();
 
     var f = caixa(
       '<div class="xpdf-tit">Montando o PDF</div>' +
@@ -836,7 +715,7 @@
         if (cancelado) return;
       }
 
-      var fila = [{ url: new URL(CAPA, location.href).href, selos: [] }];
+      var fila = [{ url: new URL(CAPA, location.href).href }];
       var plano = [];
       var numero = 3 + paginasLanc; // 1 = capa · 2 = sumário · depois os lançamentos
       if (paginasLanc) {
@@ -847,14 +726,14 @@
       }
       blocos.forEach(function (b) {
         plano.push({ cat: b.cat, primeira: numero, total: b.paginas.length, ancoras: b.ancoras });
-        b.paginas.forEach(function (p, k) { fila.push({ url: p.url, selos: b.selos[k] }); });
+        b.paginas.forEach(function (p) { fila.push({ url: p.url }); });
         numero += b.paginas.length;
       });
       var totalPag = fila.length + 1 + paginasLanc;
 
       // 2 · monta o documento
       var pdf = await PDFLib.PDFDocument.create();
-      pdf.setTitle('Catálogo Xalingo 2026 — ' + (ROTULO_ICMS[icms] || ROTULO_ICMS.p18).texto);
+      pdf.setTitle('Catálogo Xalingo 2026');
       pdf.setAuthor('Xalingo S.A. Indústria e Comércio');
       pdf.setCreationDate(new Date());
       var fonte = await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
@@ -887,7 +766,6 @@
           var page = pdf.addPage();
           page.setSize(PW, PH);
           page.drawImage(img, { x: 0, y: 0, width: PW, height: PH });
-          fila[k].selos.forEach(function (s) { desenharSelo(page, fonte, fonteNeg, rgb, s, icms); });
         } catch (e) {
           falhas++;
           pdf.addPage().setSize(PW, PH);
@@ -902,7 +780,7 @@
       // seções: as da página aberta (traduzidas); o que faltar vem da própria página da categoria
       if (paginasLanc) {
         passo(93, 'Desenhando os lan\u00e7amentos\u2026');
-        await desenharLancamentos(pdf, PDFLib, fonte, fonteNeg, gruposLanc, fotosLanc, 1, icms);
+        await desenharLancamentos(pdf, PDFLib, fonte, fonteNeg, gruposLanc, fotosLanc, 1);
       }
       var secoes = lerSecoesDaSidebar();
       secoes[LANCAMENTOS.arquivo] = gruposLanc.map(function (g) { return { id: g.id, nome: limpar(g.titulo) }; });
@@ -910,7 +788,7 @@
         var k = b.cat.arquivo.toLowerCase();
         if (!(secoes[k] && secoes[k].length)) secoes[k] = b.secoes;
       });
-      montarSumario(pdf, PDFLib, fonte, fonteNeg, plano, secoes, icms);
+      montarSumario(pdf, PDFLib, fonte, fonteNeg, plano, secoes);
 
       // 4 · salva
       passo(96, 'Fechando o arquivo… (esta parte demora um pouco)');
@@ -920,7 +798,7 @@
       var url = URL.createObjectURL(new Blob([saida], { type: 'application/pdf' }));
       var a = document.createElement('a');
       a.href = url;
-      a.download = 'Catalogo-Xalingo-2026-' + (ROTULO_ICMS[icms] || ROTULO_ICMS.p18).arquivo + '.pdf';
+      a.download = 'Catalogo-Xalingo-2026.pdf';
       document.body.appendChild(a);
       a.click();
       a.remove();
