@@ -514,6 +514,21 @@
   .cat-ofertas .card-main { background: #e8e8e8 !important; cursor: not-allowed !important; }
   .cat-ofertas .card-num, .cat-ofertas .card-title, .cat-ofertas .card-pages, .cat-ofertas .item { color: #999 !important; }
   .cat-ofertas .item { pointer-events: none; }
+  /* ===== BOTÃO PDF COMPLETO ===== */
+  .pdf-cta {
+    display: inline-flex; align-items: center; gap: 9px;
+    margin-top: 18px; padding: 11px 24px;
+    background: #1B3A5C; color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.12); border-radius: 50px;
+    font-family: 'Quicksand', sans-serif; font-size: 0.82rem; font-weight: 700;
+    letter-spacing: 0.2px; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(27,58,92,0.22);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    animation: fadeDown 0.7s ease-out 0.25s both;
+  }
+  .pdf-cta:hover { background: #24507e; transform: translateY(-2px); box-shadow: 0 10px 26px rgba(27,58,92,0.28); }
+  .pdf-cta:active { transform: scale(0.98); }
+  @media print { .pdf-cta { display: none !important; } }
 </style>
 </head>
 <body>
@@ -552,6 +567,10 @@
   </div>
   <h1 class="header-title" data-i18n="headerTitle">Sumário</h1>
   <p class="header-sub" data-i18n="headerSub">Explore nossas categorias e descubra o brinquedo ideal</p>
+  <button class="pdf-cta" onclick="XalingoPDF.abrir()" title="Gera um PDF único com capa, sumário e as 7 categorias">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+    <span data-i18n="pdfCompleto">Baixar catálogo completo em PDF</span>
+  </button>
   <div class="block-divider">
     <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
   </div>
@@ -882,6 +901,7 @@
       headerTitle:  'Sumário',
       headerSub:    'Explore nossas categorias e descubra o brinquedo ideal',
       footerText:   'Catálogo Digital 2026 · 78 Anos construindo histórias',
+      pdfCompleto:  'Baixar catálogo completo em PDF',
       // 01
       cat01Title:   'Blocos de Montar',
       cat01item1:   'Brincando de Engenheiro',
@@ -946,6 +966,7 @@
       headerTitle:  'Table of Contents',
       headerSub:    'Explore our categories and find the perfect toy',
       footerText:   'Digital Catalog 2026 · 78 Years building stories',
+      pdfCompleto:  'Download full catalog (PDF)',
       // 01
       cat01Title:   'Building Blocks',
       cat01item1:   'Playing Engineer',
@@ -1010,6 +1031,7 @@
       headerTitle:  'Índice',
       headerSub:    'Explora nuestras categorías y encuentra el juguete ideal',
       footerText:   'Catálogo Digital 2026 · 78 Años construyendo historias',
+      pdfCompleto:  'Descargar catálogo completo en PDF',
       // 01
       cat01Title:   'Bloques de Construcción',
       cat01item1:   'Jugando al Ingeniero',
@@ -1100,5 +1122,6 @@
   setLang(currentLang);
 </script>
 
+<script src="pdf-catalogo.js" defer></script>
 </body>
 </html>

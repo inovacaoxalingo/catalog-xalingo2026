@@ -44,6 +44,37 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    line-height: normal;
+  }
+
+  .btn-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    background: rgba(255,255,255,0.9);
+    color: #1B3A5C;
+    border: 2px solid rgba(27,58,92,0.15);
+    border-radius: 50px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    transition: all 0.3s ease;
+  }
+  .btn-pdf:hover { background: #fff; transform: scale(1.05); }
+
+  @media (max-width: 520px) {
+    .capa-overlay { flex-direction: column; gap: 8px; }
+    .btn-catalogo { padding: 11px 28px; font-size: 0.9rem; }
+    .btn-pdf { padding: 9px 18px; font-size: 0.78rem; }
   }
 
   .btn-catalogo {
@@ -96,8 +127,13 @@
       Ver Catálogo
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0l-7-7m7 7l-7 7"/></svg>
     </a>
+    <button class="btn-pdf" onclick="XalingoPDF.abrir()" title="Gera um PDF único com capa, sumário e as 7 categorias">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+      Baixar PDF
+    </button>
   </div>
 </div>
 
+<script src="pdf-catalogo.js" defer></script>
 </body>
 </html>

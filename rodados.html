@@ -581,7 +581,7 @@
       </div>
       <div class="sb-subs">
         <a class="sb-sub" href="faz-de-conta.html#cozinhas"><span class="sb-sub-dot"></span><span data-i18n="cat04item1">Cozinhas</span><span class="sb-sub-page">130</span></a>
-        <a class="sb-sub" href="faz-de-conta.html"><span class="sb-sub-dot"></span><span data-i18n="cat04item2">Faz de Conta</span><span class="sb-sub-page">131</span></a>
+        <a class="sb-sub" href="faz-de-conta.html#fazdeconta"><span class="sb-sub-dot"></span><span data-i18n="cat04item2">Faz de Conta</span><span class="sb-sub-page">131</span></a>
         <a class="sb-sub" href="faz-de-conta.html#agua"><span class="sb-sub-dot"></span><span data-i18n="cat04item3">Brinquedos de Água</span><span class="sb-sub-page">134</span></a>
       </div>
     </div>
@@ -665,6 +665,14 @@
       data-i18n-placeholder="searchPlaceholder" placeholder="REF ou nome do produto…"
       oninput="doSearch(this.value)" autocomplete="off" spellcheck="false">
     <div id="sbSearchResults" class="sb-search-results"></div>
+  </div>
+
+  <!-- ===== PDF DO CATÁLOGO COMPLETO ===== -->
+  <div class="btn-print-wrap">
+    <button class="btn-print" onclick="XalingoPDF.abrir()" title="Gera um PDF único com as 7 categorias, capa e sumário">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+      <span data-i18n="pdfCompleto">Catálogo completo em PDF</span>
+    </button>
   </div>
 
 </aside>
@@ -1064,7 +1072,7 @@
 
   const translations = {
     pt: {
-      backLink:'Voltar ao Sumário', searchTitle:'Pesquise', searchPlaceholder:'REF ou nome do produto…', searchEmpty:'Nenhum resultado', searchGoTo:'ver nesta página', searchNavTo:'ir para',
+      backLink:'Voltar ao Sumário', searchTitle:'Pesquise', searchPlaceholder:'REF ou nome do produto…', searchEmpty:'Nenhum resultado', searchGoTo:'ver nesta página', searchNavTo:'ir para', pdfCompleto:'Catálogo completo em PDF',
       cat01Title:'Blocos de Montar', cat01item1:'Brincando de Engenheiro', cat01item2:'Blocos de Montar', cat01item3:'Blocos Grandes', cat01item4:'Blocos Soft',
       cat02Title:'Educativos', cat02item1:'Desenvolvimento', cat02item2:'Steam', cat02item3:'Playset', cat02item4:'Quadros para Colorir', cat02item5:'Quebra-cabeça', cat02item6:'Memória', cat02item7:'Dominó', cat02item8:'Blocos Pedagógicos', cat02item9:'Jogos Educativos',
       cat03Title:'Jogos', cat03item1:'Xadrez', cat03item2:'Jogos Clássicos', cat03item3:'Board Games',
@@ -1074,7 +1082,7 @@
       cat07Title:'Playground', cat07item1:'Balanços', cat07item2:'Gangorras', cat07item3:'Complementos', cat07item4:'Escorregadores', cat07item5:'Casinhas', cat07item6:'Outdoor Menor', cat07item7:'Outdoor Maior',
     },
     en: {
-      backLink:'Back to Table of Contents', searchTitle:'Search', searchPlaceholder:'REF or product name…', searchEmpty:'No results', searchGoTo:'view on this page', searchNavTo:'go to',
+      backLink:'Back to Table of Contents', searchTitle:'Search', searchPlaceholder:'REF or product name…', searchEmpty:'No results', searchGoTo:'view on this page', searchNavTo:'go to', pdfCompleto:'Full catalog as PDF',
       cat01Title:'Building Blocks', cat01item1:'Playing Engineer', cat01item2:'Building Blocks', cat01item3:'Large Blocks', cat01item4:'Soft Blocks',
       cat02Title:'Educational', cat02item1:'Development', cat02item2:'Steam', cat02item3:'Playset', cat02item4:'Coloring Boards', cat02item5:'Puzzle', cat02item6:'Memory', cat02item7:'Domino', cat02item8:'Pedagogical Blocks', cat02item9:'Educational Games',
       cat03Title:'Games', cat03item1:'Chess', cat03item2:'Classic Games', cat03item3:'Board Games',
@@ -1084,7 +1092,7 @@
       cat07Title:'Playground', cat07item1:'Swings', cat07item2:'Seesaws', cat07item3:'Accessories', cat07item4:'Slides', cat07item5:'Playhouses', cat07item6:'Small Outdoor', cat07item7:'Large Outdoor',
     },
     es: {
-      backLink:'Volver al Índice', searchTitle:'Buscar', searchPlaceholder:'REF o nombre del producto…', searchEmpty:'Sin resultados', searchGoTo:'ver en esta página', searchNavTo:'ir a',
+      backLink:'Volver al Índice', searchTitle:'Buscar', searchPlaceholder:'REF o nombre del producto…', searchEmpty:'Sin resultados', searchGoTo:'ver en esta página', searchNavTo:'ir a', pdfCompleto:'Catálogo completo en PDF',
       cat01Title:'Bloques de Construcción', cat01item1:'Jugando al Ingeniero', cat01item2:'Bloques de Construcción', cat01item3:'Bloques Grandes', cat01item4:'Bloques Soft',
       cat02Title:'Educativos', cat02item1:'Desarrollo', cat02item2:'Steam', cat02item3:'Playset', cat02item4:'Pizarras para Colorear', cat02item5:'Rompecabezas', cat02item6:'Memoria', cat02item7:'Dominó', cat02item8:'Bloques Pedagógicos', cat02item9:'Juegos Educativos',
       cat03Title:'Juegos', cat03item1:'Ajedrez', cat03item2:'Juegos Clásicos', cat03item3:'Board Games',
@@ -1195,5 +1203,6 @@
   setLang(currentLang);
 </script>
 
+<script src="pdf-catalogo.js" defer></script>
 </body>
 </html>

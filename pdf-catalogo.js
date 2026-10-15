@@ -27,6 +27,23 @@
 
   var CAPA = 'capa.jpg';
 
+  // Lançamentos: lidos da lista PRODUCTS da lancamentos.html e desenhados no PDF
+  // logo depois do sumário (6 produtos por página, com foto, REF, idade e entrega).
+  var LANCAMENTOS = {
+    arquivo: 'lancamentos.html',
+    nome: 'Lan\u00e7amentos 2026',
+    cor: [0.94, 0.63, 0.19],
+    porPagina: 6
+  };
+  var CAT_LANC = {
+    blocos:     { nome: 'Blocos',     cor: [0.161, 0.231, 0.498] },
+    educativos: { nome: 'Educativos', cor: [0.302, 0.208, 0.604] },
+    jogos:      { nome: 'Jogos',      cor: [0.937, 0.192, 0.157] },
+    esportes:   { nome: 'Esportes',   cor: [0.973, 0.620, 0.110] },
+    playground: { nome: 'Playground', cor: [0.537, 0.078, 0.204] }
+  };
+  var TAG_LANC = { lanc: [0.627, 0.118, 0.118], linha: [0.482, 0.122, 0.635], opo: [0.761, 0.255, 0.047] };
+
   // Página do catálogo: 210 × 280 mm (proporção 3:4 das imagens originais)
   var PW = 595.28, PH = 793.70;
 
@@ -156,22 +173,218 @@
       if (alvo >= 0) selosPorPagina[alvo].push({ ref: ref, d: d });
     });
 
-    return { cat: cat, paginas: paginas, selos: selosPorPagina, ancoras: ancoras };
+    var secoes = secoesDe(doc, cat.arquivo)[cat.arquivo.toLowerCase()] || [];
+
+    return { cat: cat, paginas: paginas, selos: selosPorPagina, ancoras: ancoras, secoes: secoes };
   }
 
-  // Nomes das seções vêm da sidebar da página atual (já traduzida pelo idioma ativo)
-  function lerSecoesDaSidebar() {
+  // Nomes das seções: links "arquivo.html#ancora" da sidebar (verticais) ou do sumário.
+  // Link só com "#ancora" pertence ao próprio arquivo.
+  function secoesDe(raiz, arquivoAtual) {
     var mapa = {};
-    Array.prototype.forEach.call(document.querySelectorAll('.sb-sub[href]'), function (a) {
-      var href = a.getAttribute('href') || '';
-      var p = href.split('#');
-      if (p.length < 2) return;
-      var nome = a.querySelector('.sb-sub-page');
-      var texto = a.textContent;
-      if (nome) texto = texto.replace(nome.textContent, '');
-      (mapa[p[0]] = mapa[p[0]] || []).push({ id: p[1], nome: limpar(texto) });
+    Array.prototype.forEach.call(raiz.querySelectorAll('.sb-sub[href], a.item[href]'), function (a) {
+      var p = (a.getAttribute('href') || '').split('#');
+      if (p.length < 2 || !p[1]) return;
+      var arq = (p[0] || arquivoAtual || '').split('/').pop().toLowerCase();
+      if (!arq) return;
+      var c = a.cloneNode(true);
+      Array.prototype.forEach.call(c.querySelectorAll('.sb-sub-page, .item-page, .item-arrow'), function (x) { x.remove(); });
+      var lista = (mapa[arq] = mapa[arq] || []);
+      if (lista.some(function (x) { return x.id === p[1]; })) return;
+      lista.push({ id: p[1], nome: limpar(c.textContent) });
     });
     return mapa;
+  }
+
+  // da página aberta agora (já traduzida pelo idioma ativo)
+  function lerSecoesDaSidebar() {
+    return secoesDe(document, (location.pathname.split('/').pop() || 'index.html').toLowerCase());
+  }
+
+  /* ── Lançamentos ─────────────────────────────────────────────────────── */
+
+  async function lerLancamentos() {
+    var resp = await fetch(LANCAMENTOS.arquivo, { cache: 'no-cache' });
+    if (!resp.ok) throw new Error(LANCAMENTOS.arquivo + ' (HTTP ' + resp.status + ')');
+    var html = await resp.text();
+    var lit = recortarLiteral(html, 'PRODUCTS', '[', ']');
+    if (!lit) return [];
+    var prods = new Function('return ' + lit)() || [];
+    var entrega = {};
+    var litE = recortarLiteral(html, 'DELIVERY', '{', '}');
+    if (litE) { try { entrega = new Function('return ' + litE)() || {}; } catch (e) { entrega = {}; } }
+    prods.forEach(function (p) { if (!p.delivery && entrega[p.ref]) p.delivery = entrega[p.ref]; });
+
+    var ordemCat = Object.keys(CAT_LANC);
+    var onda2 = prods.filter(function (p) { return p.onda === 2; });
+    var outros = prods.filter(function (p) { return p.onda !== 2; }).sort(function (a, b) {
+      return ordemCat.indexOf(a.cat) - ordemCat.indexOf(b.cat);   // sort estável: mantém a ordem da página
+    });
+    return [
+      { id: 'onda2', titulo: '2ª onda de lançamentos', itens: onda2 },
+      { id: 'todos', titulo: 'Todos os lançamentos 2026', itens: outros }
+    ].filter(function (g) { return g.itens.length; });
+  }
+
+  function paginasDoGrupo(g) { return Math.ceil(g.itens.length / LANCAMENTOS.porPagina); }
+
+  // Fotos ficam no WordPress (oneweb), que não libera CORS: tenta o proxy de imagem
+  // primeiro (já entrega JPEG com fundo branco), depois direto, depois o arquivo sem o recorte -1024x…
+  function candidatosFoto(url) {
+    var lista = [], semRecorte = url.replace(/-\d+x\d+(\.(?:png|jpe?g|webp))$/i, '$1');
+    [url, semRecorte].forEach(function (u, i) {
+      if (i && u === url) return;
+      lista.push('https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/^https?:\/\//, '')) +
+                 '&w=720&h=720&fit=inside&output=jpg&bg=white&q=85');
+      lista.push(u);
+      lista.push('https://corsproxy.io/?url=' + encodeURIComponent(u));
+    });
+    return lista;
+  }
+
+  async function fotoLancamento(url) {
+    if (!url) return null;
+    var alvos = candidatosFoto(url);
+    for (var i = 0; i < alvos.length; i++) {
+      try {
+        var r = await fetch(alvos[i], { cache: 'force-cache', signal: AbortSignal.timeout(15000) });
+        if (!r.ok) continue;
+        var blob = await r.blob();
+        if (!blob || blob.size < 200 || !/^image\//.test(blob.type || 'image/')) continue;
+        var bmp = await createImageBitmap(blob);
+        var esc = Math.min(1, 720 / Math.max(bmp.width, bmp.height));
+        var cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(bmp.width * esc));
+        cv.height = Math.max(1, Math.round(bmp.height * esc));
+        var ctx = cv.getContext('2d');
+        ctx.fillStyle = '#ffffff';                       // PNG transparente não vira preto
+        ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(bmp, 0, 0, cv.width, cv.height);
+        bmp.close && bmp.close();
+        var saida = await new Promise(function (ok) { cv.toBlob(ok, 'image/jpeg', 0.85); });
+        cv.width = cv.height = 0;
+        return new Uint8Array(await saida.arrayBuffer());
+      } catch (e) { /* tenta o próximo */ }
+    }
+    return null;
+  }
+
+  function quebrarLinhas(txt, fonte, tam, largura, maxLinhas) {
+    var palavras = txt.split(/\s+/), linhas = [], atual = '';
+    palavras.forEach(function (w) {
+      var t = atual ? atual + ' ' + w : w;
+      if (fonte.widthOfTextAtSize(t, tam) <= largura || !atual) atual = t;
+      else { linhas.push(atual); atual = w; }
+    });
+    if (atual) linhas.push(atual);
+    if (linhas.length > maxLinhas) {
+      linhas = linhas.slice(0, maxLinhas);
+      var u = linhas[maxLinhas - 1];
+      while (u.length > 3 && fonte.widthOfTextAtSize(u + '…', tam) > largura) u = u.slice(0, -1);
+      linhas[maxLinhas - 1] = u + '…';
+    }
+    return linhas;
+  }
+
+  // Desenha as páginas de lançamentos a partir do índice `inicio` (0 = primeira página do PDF)
+  async function desenharLancamentos(pdf, PDFLib, fonte, fonteNeg, grupos, fotos, inicio) {
+    var rgb = PDFLib.rgb;
+    var navy = rgb(0.106, 0.227, 0.361), creme = rgb(0.961, 0.898, 0.839), ouro = rgb(0.941, 0.627, 0.188);
+    var M = 30, VAO = 12, TOPO = PH - 78, BASE = 40, COLS = 2, LINS = 3;
+    var cw = (PW - M * 2 - VAO * (COLS - 1)) / COLS;
+    var ch = (TOPO - BASE - VAO * (LINS - 1)) / LINS;
+    var idx = inicio, imgCache = {};
+
+    function rgbArr(a) { return rgb(a[0], a[1], a[2]); }
+
+    for (var g = 0; g < grupos.length; g++) {
+      var grupo = grupos[g], nPag = paginasDoGrupo(grupo);
+      for (var pg = 0; pg < nPag; pg++) {
+        var page = pdf.insertPage(idx++);
+        page.setSize(PW, PH);
+        var links = [];
+        page.drawRectangle({ x: 0, y: 0, width: PW, height: PH, color: creme });
+        page.drawRectangle({ x: 0, y: PH - 58, width: PW, height: 58, color: navy });
+        page.drawRectangle({ x: 0, y: PH - 61, width: PW, height: 3, color: ouro });
+        page.drawText('LANÇAMENTOS 2026', { x: M, y: PH - 32, size: 17, font: fonteNeg, color: rgb(1, 1, 1) });
+        var sub = limpar(grupo.titulo) + (nPag > 1 ? '  ·  ' + (pg + 1) + '/' + nPag : '');
+        page.drawText(sub, { x: M, y: PH - 47, size: 8.5, font: fonteNeg, color: ouro });
+        var marca = 'Xalingo Brinquedos';
+        page.drawText(marca, { x: PW - M - fonte.widthOfTextAtSize(marca, 8), y: PH - 32, size: 8, font: fonte, color: rgb(1, 1, 1), opacity: 0.7 });
+
+        var itens = grupo.itens.slice(pg * LANCAMENTOS.porPagina, (pg + 1) * LANCAMENTOS.porPagina);
+        for (var i = 0; i < itens.length; i++) {
+          var p = itens[i];
+          var col = i % COLS, lin = Math.floor(i / COLS);
+          var x = M + col * (cw + VAO), yTopo = TOPO - lin * (ch + VAO), y = yTopo - ch;
+
+          page.drawRectangle({ x: x, y: y, width: cw, height: ch, color: rgb(1, 1, 1),
+                               borderColor: rgb(0.85, 0.80, 0.74), borderWidth: 0.6 });
+
+          // foto
+          var areaH = ch - 78, areaW = cw - 20, ax = x + 10, ay = yTopo - 10 - areaH;
+          var bytes = fotos[p.ref];
+          if (bytes) {
+            try {
+              var img = imgCache[p.ref] || (imgCache[p.ref] = await pdf.embedJpg(bytes));
+              var k = Math.min(areaW / img.width, areaH / img.height);
+              var w = img.width * k, h = img.height * k;
+              page.drawImage(img, { x: ax + (areaW - w) / 2, y: ay + (areaH - h) / 2, width: w, height: h });
+            } catch (e) { bytes = null; }
+          }
+          if (!bytes) {
+            page.drawRectangle({ x: ax, y: ay, width: areaW, height: areaH, color: rgb(0.95, 0.93, 0.90) });
+            var semFoto = 'Foto em breve';
+            page.drawText(semFoto, { x: ax + (areaW - fonte.widthOfTextAtSize(semFoto, 8)) / 2, y: ay + areaH / 2 - 3,
+                                     size: 8, font: fonte, color: navy, opacity: 0.4 });
+          }
+
+          // selo: tag da 2ª onda ou categoria
+          var catInfo = CAT_LANC[p.cat] || { nome: p.cat || '', cor: [0.4, 0.4, 0.4] };
+          var selo = limpar(p.tag ? p.tag : catInfo.nome).toUpperCase();
+          var corSelo = p.tag ? (TAG_LANC[p.tagc] || TAG_LANC.lanc) : catInfo.cor;
+          var sw = fonteNeg.widthOfTextAtSize(selo, 6.2) + 10;
+          page.drawRectangle({ x: x + 10, y: yTopo - 22, width: sw, height: 13, color: rgbArr(corSelo) });
+          page.drawText(selo, { x: x + 15, y: yTopo - 18, size: 6.2, font: fonteNeg, color: rgb(1, 1, 1) });
+
+          // textos
+          var ty = ay - 13;
+          page.drawText('REF ' + limpar(p.ref), { x: x + 10, y: ty, size: 7, font: fonteNeg, color: navy, opacity: 0.5 });
+          ty -= 12;
+          quebrarLinhas(limpar(p.nome), fonteNeg, 9.2, cw - 20, 2).forEach(function (l) {
+            page.drawText(l, { x: x + 10, y: ty, size: 9.2, font: fonteNeg, color: navy });
+            ty -= 11;
+          });
+          var info = [];
+          if (p.idade) info.push(limpar(p.idade));
+          if (p.delivery) info.push('Entrega: ' + limpar(p.delivery));
+          if (info.length) {
+            page.drawText(info.join('  ·  '), { x: x + 10, y: y + (p.aviso ? 20 : 9), size: 7.2, font: fonte, color: navy, opacity: 0.72 });
+          }
+          if (p.aviso) {
+            page.drawText('! ' + limpar(p.aviso), { x: x + 10, y: y + 9, size: 7, font: fonteNeg, color: rgb(0.70, 0.40, 0) });
+          }
+          if (p.site) links.push({ url: p.site, rect: [x, y, x + cw, yTopo] });
+        }
+
+        page.drawText(limpar('Preços conforme a tabela vigente · clique no produto para ver a ficha completa'), {
+          x: M, y: 20, size: 7, font: fonte, color: navy, opacity: 0.45
+        });
+
+        try {
+          if (links.length) {
+            var ctx = pdf.context;
+            page.node.set(PDFLib.PDFName.of('Annots'), ctx.obj(links.map(function (l) {
+              return ctx.register(ctx.obj({
+                Type: 'Annot', Subtype: 'Link', Rect: l.rect, Border: [0, 0, 0],
+                A: { Type: 'Action', S: 'URI', URI: PDFLib.PDFString.of(l.url) }
+              }));
+            })));
+          }
+        } catch (e) { /* sem links */ }
+      }
+    }
+    return idx - inicio;
   }
 
   /* ── Recompressão opcional ────────────────────────────────────────────── */
@@ -263,7 +476,7 @@
     var disponivel = TOPO - BASE;
     var duasColunas = alturaTotal > disponivel;
 
-    var colW = duasColunas ? (PW - MARGEM * 2 - VAO) / 2 : 400;
+    var colW = duasColunas ? (PW - MARGEM * 2 - VAO) / 2 : 330;
     var colX = [MARGEM, MARGEM + colW + VAO];
     var col = 0, y = TOPO;
 
@@ -376,7 +589,18 @@
       '.xpdf-barra{height:7px;background:rgba(27,58,92,.13);border-radius:5px;overflow:hidden;margin:14px 0 9px}',
       '.xpdf-barra i{display:block;height:100%;width:0;background:#A01E1E;border-radius:5px;transition:width .25s}',
       '.xpdf-st{font-size:.72rem;font-weight:700;color:#1B3A5C;opacity:.75;min-height:32px;line-height:1.4}',
-      '.xpdf-erro{font-size:.75rem;font-weight:600;color:#A01E1E;line-height:1.5}'
+      '.xpdf-erro{font-size:.75rem;font-weight:600;color:#A01E1E;line-height:1.5}',
+      '.xpdf-rot{font-size:.62rem;font-weight:800;color:#1B3A5C;opacity:.6;text-transform:uppercase;',
+      'letter-spacing:.6px;margin:2px 0 7px}',
+      '.xpdf-rot span{text-transform:none;letter-spacing:0;font-weight:600;opacity:.8;margin-left:4px}',
+      '.xpdf-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}',
+      '.xpdf-chip{font-family:inherit;font-size:.68rem;font-weight:700;padding:5px 10px;border-radius:20px;',
+      'border:1.5px solid rgba(27,58,92,.18);background:#fff;color:#1B3A5C;cursor:pointer;transition:.15s}',
+      '.xpdf-chip:hover{border-color:#1B3A5C}',
+      '.xpdf-chip.on{background:#1B3A5C;border-color:#1B3A5C;color:#fff}',
+      '.xpdf-chk{display:flex;align-items:center;gap:8px;font-size:.76rem;font-weight:600;color:#1B3A5C;',
+      'background:#fff;border:1.5px solid rgba(27,58,92,.16);border-radius:11px;padding:9px 12px;margin-bottom:14px;cursor:pointer}',
+      '.xpdf-chk input{width:15px;height:15px;accent-color:#1B3A5C;cursor:pointer}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -399,30 +623,48 @@
 
   function abrir() {
     var icms = icmsAtual();
-    var rot = (ROTULO_ICMS[icms] || ROTULO_ICMS.p18).texto;
+    var chips = Object.keys(ROTULO_ICMS).map(function (k) {
+      return '<button class="xpdf-chip' + (k === icms ? ' on' : '') + '" data-icms="' + k + '">' +
+             ROTULO_ICMS[k].texto + '</button>';
+    }).join('');
     var ops = Object.keys(QUALIDADES).map(function (k) {
       var q = QUALIDADES[k];
       return '<button class="xpdf-op" data-q="' + k + '"><b>' + q.rotulo + '</b><span>' + q.nota + '</span></button>';
     }).join('');
     var f = caixa(
       '<div class="xpdf-tit">Baixar o catálogo completo</div>' +
-      '<div class="xpdf-sub">176 páginas, com os preços de <b>' + rot + '</b>.<br>' +
-      'Escolha a qualidade — quanto maior, mais demora e mais pesa o arquivo.</div>' +
+      '<div class="xpdf-sub">Capa, sumário e as 7 categorias num PDF só.</div>' +
+      '<div class="xpdf-rot">Tabela de preços</div>' +
+      '<div class="xpdf-chips">' + chips + '</div>' +
+      '<label class="xpdf-chk"><input type="checkbox" id="xpdf-lanc" checked> Incluir <b>Lançamentos 2026</b> logo após o sumário</label>' +
+      '<div class="xpdf-rot">Qualidade <span>quanto maior, mais demora e mais pesa</span></div>' +
       ops +
       '<button class="xpdf-fech">Cancelar</button>'
     );
     f.querySelector('.xpdf-fech').onclick = fechar;
+    f.addEventListener('click', function (e) { if (e.target === f) fechar(); });
+    Array.prototype.forEach.call(f.querySelectorAll('.xpdf-chip'), function (b) {
+      b.onclick = function () {
+        icms = b.getAttribute('data-icms');
+        Array.prototype.forEach.call(f.querySelectorAll('.xpdf-chip'), function (o) { o.classList.toggle('on', o === b); });
+      };
+    });
     Array.prototype.forEach.call(f.querySelectorAll('.xpdf-op'), function (b) {
-      b.onclick = function () { gerar(b.getAttribute('data-q')); };
+      b.onclick = function () {
+        var chk = document.getElementById('xpdf-lanc');
+        gerar(b.getAttribute('data-q'), icms, { lancamentos: !chk || chk.checked });
+      };
     });
   }
 
   /* ── Geração ──────────────────────────────────────────────────────────── */
 
-  async function gerar(nivel) {
+  async function gerar(nivel, icmsEscolhido, opcoes) {
+    opcoes = opcoes || {};
+    var comLanc = opcoes.lancamentos !== false;
     cancelado = false;
     var q = QUALIDADES[nivel] || QUALIDADES.media;
-    var icms = icmsAtual();
+    var icms = ROTULO_ICMS[icmsEscolhido] ? icmsEscolhido : icmsAtual();
 
     var f = caixa(
       '<div class="xpdf-tit">Montando o PDF</div>' +
@@ -463,15 +705,44 @@
         passo(3 + (i + 1) / CATEGORIAS.length * 5, 'Lendo as categorias… ' + (i + 1) + '/7');
       }
 
+      // lançamentos entram logo depois do sumário
+      var gruposLanc = [], paginasLanc = 0, fotosLanc = {}, semFotoLanc = 0;
+      if (comLanc) {
+        passo(8, 'Lendo os lan\u00e7amentos\u2026');
+        try { gruposLanc = await lerLancamentos(); } catch (e) { gruposLanc = []; }
+        gruposLanc.forEach(function (g) { paginasLanc += paginasDoGrupo(g); });
+        var todosLanc = [];
+        gruposLanc.forEach(function (g) { g.itens.forEach(function (p) { todosLanc.push(p); }); });
+        var filaFoto = todosLanc.filter(function (p) { return p.img; }), feitas = 0;
+        async function trabalhador() {
+          while (filaFoto.length) {
+            if (cancelado) return;
+            var p = filaFoto.shift();
+            fotosLanc[p.ref] = await fotoLancamento(p.img);
+            if (!fotosLanc[p.ref]) semFotoLanc++;
+            feitas++;
+            passo(8 + feitas / todosLanc.length * 10, 'Fotos dos lan\u00e7amentos\u2026 ' + feitas + '/' + todosLanc.length);
+          }
+        }
+        await Promise.all([1, 2, 3, 4, 5, 6].map(trabalhador));
+        if (cancelado) return;
+      }
+
       var fila = [{ url: new URL(CAPA, location.href).href, selos: [] }];
       var plano = [];
-      var numero = 3; // 1 = capa · 2 = sumário
+      var numero = 3 + paginasLanc; // 1 = capa · 2 = sumário · depois os lançamentos
+      if (paginasLanc) {
+        var ancLanc = {}, acum = 0;
+        gruposLanc.forEach(function (g) { ancLanc[g.id] = acum; acum += paginasDoGrupo(g); });
+        plano.push({ cat: { num: '', arquivo: LANCAMENTOS.arquivo, nome: LANCAMENTOS.nome, cor: LANCAMENTOS.cor },
+                     primeira: 3, total: paginasLanc, ancoras: ancLanc });
+      }
       blocos.forEach(function (b) {
         plano.push({ cat: b.cat, primeira: numero, total: b.paginas.length, ancoras: b.ancoras });
         b.paginas.forEach(function (p, k) { fila.push({ url: p.url, selos: b.selos[k] }); });
         numero += b.paginas.length;
       });
-      var totalPag = fila.length + 1;
+      var totalPag = fila.length + 1 + paginasLanc;
 
       // 2 · monta o documento
       var pdf = await PDFLib.PDFDocument.create();
@@ -497,7 +768,7 @@
       for (var k = 0; k < fila.length; k++) {
         if (cancelado) return;
         baixar(k + JANELA);
-        passo(8 + (k / fila.length) * 84,
+        passo(19 + (k / fila.length) * 73,
           'Página ' + (k + 1) + ' de ' + fila.length + (falhas ? ' · ' + falhas + ' com problema' : ''));
         try {
           var blob = await buffers[k];
@@ -520,7 +791,20 @@
       // 3 · sumário entra na posição 2, com os destinos já existindo
       if (cancelado) return;
       passo(93, 'Montando o sumário…');
-      montarSumario(pdf, PDFLib, fonte, fonteNeg, plano, lerSecoesDaSidebar(), icms);
+      // seções: as da página aberta (traduzidas); o que faltar vem da própria página da categoria
+      if (paginasLanc) {
+        passo(93, 'Desenhando os lan\u00e7amentos\u2026');
+        await desenharLancamentos(pdf, PDFLib, fonte, fonteNeg, gruposLanc, fotosLanc, 1);
+      }
+      var secoes = lerSecoesDaSidebar();
+      secoes[LANCAMENTOS.arquivo] = gruposLanc.map(function (g) {
+        return { id: g.id, nome: g.id === 'onda2' ? '2\u00aa Onda' : 'Todos os lan\u00e7amentos' };
+      });
+      blocos.forEach(function (b) {
+        var k = b.cat.arquivo.toLowerCase();
+        if (!(secoes[k] && secoes[k].length)) secoes[k] = b.secoes;
+      });
+      montarSumario(pdf, PDFLib, fonte, fonteNeg, plano, secoes, icms);
 
       // 4 · salva
       passo(96, 'Fechando o arquivo… (esta parte demora um pouco)');
@@ -537,7 +821,8 @@
       setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
 
       passo(100, 'Pronto — ' + totalPag + ' páginas, ' + (saida.length / 1048576).toFixed(0) + ' MB.' +
-        (falhas ? ' ' + falhas + ' página(s) não carregaram e ficaram em branco.' : ''));
+        (falhas ? ' ' + falhas + ' página(s) não carregaram e ficaram em branco.' : '') +
+        (semFotoLanc ? ' ' + semFotoLanc + ' lançamento(s) sem foto.' : ''));
       setTimeout(fechar, 4000);
 
     } catch (e) {
