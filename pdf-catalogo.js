@@ -27,20 +27,17 @@
 
   var CAPA = 'capa.jpg';
 
-  // Lançamentos: lidos da lista PRODUCTS da lancamentos.html e desenhados no PDF
-  // logo depois do sumário (6 produtos por página, com foto, REF, idade e entrega).
+  // Lançamentos: só a 2ª onda, lida da página dela (mesmo domínio github.io), com preços,
+  // fotos, medidas e avisos. Entram logo depois do sumário, 2 produtos por página.
+  // Se a página não responder, usa os itens onda:2 da lancamentos.html deste catálogo.
   var LANCAMENTOS = {
-    arquivo: 'lancamentos.html',
-    nome: 'Lan\u00e7amentos 2026',
+    fonte: 'https://inovacaoxalingo.github.io/lancamentos/index.html',
+    local: 'lancamentos.html',
+    arquivo: 'lancamentos.html',          // chave das seções no sumário
+    nome: 'Lançamentos · 2ª onda',
     cor: [0.94, 0.63, 0.19],
-    porPagina: 6
-  };
-  var CAT_LANC = {
-    blocos:     { nome: 'Blocos',     cor: [0.161, 0.231, 0.498] },
-    educativos: { nome: 'Educativos', cor: [0.302, 0.208, 0.604] },
-    jogos:      { nome: 'Jogos',      cor: [0.937, 0.192, 0.157] },
-    esportes:   { nome: 'Esportes',   cor: [0.973, 0.620, 0.110] },
-    playground: { nome: 'Playground', cor: [0.537, 0.078, 0.204] }
+    porPagina: 2,
+    fotos: 3                               // 1 grande + 2 menores
   };
   var TAG_LANC = { lanc: [0.627, 0.118, 0.118], linha: [0.482, 0.122, 0.635], opo: [0.761, 0.255, 0.047] };
 
@@ -73,7 +70,8 @@
 
   // Helvetica embutida só aceita Latin-1; tira emoji e afins antes de desenhar
   function limpar(s) {
-    return String(s == null ? '' : s).replace(/[^\x20-\xFF]/g, '').trim();
+    return String(s == null ? '' : s).replace(/[‐‑−]/g, '-')
+      .replace(/[^\x20-\xFF–—‘’“”•…€]/g, '').replace(/\s{2,}/g, ' ').trim();
   }
 
   function preco(valor, icms) {
@@ -201,50 +199,102 @@
     return secoesDe(document, (location.pathname.split('/').pop() || 'index.html').toLowerCase());
   }
 
-  /* ── Lançamentos ─────────────────────────────────────────────────────── */
+  /* ── Lançamentos · 2ª onda ───────────────────────────────────────────── */
 
+  function avaliarLiteral(html, nome, abre, fecha) {
+    var lit = recortarLiteral(html, nome, abre, fecha);
+    if (!lit) return null;
+    try { return new Function('return ' + lit)(); } catch (e) { return null; }
+  }
+
+  async function lerTexto(url) {
+    var r = await fetch(url, { cache: 'no-cache' });
+    if (!r.ok) throw new Error(url + ' (HTTP ' + r.status + ')');
+    return r.text();
+  }
+
+  // devolve [{ id, titulo, itens:[produto] }] — um grupo por seção do site da 2ª onda
   async function lerLancamentos() {
-    var resp = await fetch(LANCAMENTOS.arquivo, { cache: 'no-cache' });
-    if (!resp.ok) throw new Error(LANCAMENTOS.arquivo + ' (HTTP ' + resp.status + ')');
-    var html = await resp.text();
-    var lit = recortarLiteral(html, 'PRODUCTS', '[', ']');
-    if (!lit) return [];
-    var prods = new Function('return ' + lit)() || [];
-    var entrega = {};
-    var litE = recortarLiteral(html, 'DELIVERY', '{', '}');
-    if (litE) { try { entrega = new Function('return ' + litE)() || {}; } catch (e) { entrega = {}; } }
-    prods.forEach(function (p) { if (!p.delivery && entrega[p.ref]) p.delivery = entrega[p.ref]; });
+    // dados complementares do catálogo (idade, prazo de entrega)
+    var extra = {};
+    try {
+      var htmlLocal = await lerTexto(LANCAMENTOS.local);
+      var prodsLocal = avaliarLiteral(htmlLocal, 'PRODUCTS', '[', ']') || [];
+      var entrega = avaliarLiteral(htmlLocal, 'DELIVERY', '{', '}') || {};
+      var descs = avaliarLiteral(htmlLocal, 'DESCS', '{', '}') || {};
+      var medidas = avaliarLiteral(htmlLocal, 'MEDIDAS', '{', '}') || {};
+      prodsLocal.forEach(function (p) {
+        extra[p.ref] = { p: p, idade: p.idade || '', entrega: entrega[p.ref] || '',
+                         desc: (descs[p.ref] || '').split('\n\n')[0], log: medidas[p.ref] || null };
+      });
+    } catch (e) { /* segue sem os extras */ }
 
-    var ordemCat = Object.keys(CAT_LANC);
-    var onda2 = prods.filter(function (p) { return p.onda === 2; });
-    var outros = prods.filter(function (p) { return p.onda !== 2; }).sort(function (a, b) {
-      return ordemCat.indexOf(a.cat) - ordemCat.indexOf(b.cat);   // sort estável: mantém a ordem da página
-    });
-    return [
-      { id: 'onda2', titulo: '2ª onda de lançamentos', itens: onda2 },
-      { id: 'todos', titulo: 'Todos os lançamentos 2026', itens: outros }
-    ].filter(function (g) { return g.itens.length; });
+    try {
+      var html = await lerTexto(LANCAMENTOS.fonte);
+      var prods = avaliarLiteral(html, 'PRODUTOS', '[', ']');
+      if (!prods || !prods.length) throw new Error('sem PRODUTOS');
+      var precos = avaliarLiteral(html, 'PRECOS', '{', '}') || {};
+      var logist = avaliarLiteral(html, 'LOGISTICA', '{', '}') || {};
+      var secoes = avaliarLiteral(html, 'SECOES', '[', ']') || [{ id: '*', titulo: '2ª onda de lançamentos' }];
+      var mB = /const\s+B\s*=\s*["']([^"']+)["']/.exec(html);
+      var base = mB ? mB[1] : 'https://produtosxalingo.oneweb.com.br/wp-content/uploads/';
+
+      var itens = prods.map(function (p) {
+        var x = extra[p.ref] || {};
+        return {
+          ref: p.ref, proj: p.proj || '', nome: p.nome, cat: p.cat,
+          tag: p.tag || 'LANÇAMENTO', tagc: p.tagc || 'lanc', ean: p.ean || '',
+          desc: p.desc || x.desc || '',
+          aviso: p.aviso ? (typeof p.aviso === 'string' ? { titulo: p.aviso, texto: '' } : p.aviso) : null,
+          fotos: (p.imgs || []).slice(0, LANCAMENTOS.fotos).map(function (f) { return /^https?:/.test(f) ? f : base + f; }),
+          preco: precos[p.ref] || null,
+          log: logist[p.ref] || x.log || null,
+          idade: x.idade || '',
+          entrega: x.entrega || (p.estoque !== false ? 'Pronta entrega' : ''),
+          estoque: p.estoque !== false
+        };
+      });
+      var grupos = secoes.map(function (sc) {
+        return { id: 'onda2-' + sc.id, titulo: sc.titulo,
+                 itens: itens.filter(function (p) { return sc.id === '*' || p.cat === sc.id; }) };
+      });
+      var soltos = itens.filter(function (p) { return !grupos.some(function (g) { return g.itens.indexOf(p) >= 0; }); });
+      if (soltos.length) grupos.push({ id: 'onda2-outros', titulo: 'Outros', itens: soltos });
+      return grupos.filter(function (g) { return g.itens.length; });
+    } catch (e) {
+      // reserva: itens da 2ª onda que estão na lancamentos.html deste catálogo
+      var lista = Object.keys(extra).map(function (r) { return extra[r]; })
+        .filter(function (x) { return x.p.onda === 2; })
+        .map(function (x) {
+          var p = x.p;
+          return { ref: p.ref, proj: '', nome: p.nome, tag: p.tag || 'Lançamento', tagc: p.tagc || 'lanc',
+                   ean: p.ean || '', desc: x.desc, aviso: p.aviso ? { titulo: p.aviso, texto: '' } : null,
+                   fotos: p.img ? [p.img] : [], preco: null, log: x.log, idade: x.idade,
+                   entrega: x.entrega, estoque: x.entrega === 'Pronta entrega' };
+        });
+      return lista.length ? [{ id: 'onda2', titulo: '2ª onda de lançamentos', itens: lista }] : [];
+    }
   }
 
   function paginasDoGrupo(g) { return Math.ceil(g.itens.length / LANCAMENTOS.porPagina); }
 
   // Fotos ficam no WordPress (oneweb), que não libera CORS: tenta o proxy de imagem
-  // primeiro (já entrega JPEG com fundo branco), depois direto, depois o arquivo sem o recorte -1024x…
-  function candidatosFoto(url) {
-    var lista = [], semRecorte = url.replace(/-\d+x\d+(\.(?:png|jpe?g|webp))$/i, '$1');
-    [url, semRecorte].forEach(function (u, i) {
-      if (i && u === url) return;
+  // primeiro (já entrega JPEG com fundo branco), depois direto. Original antes do recorte -1024x….
+  function candidatosFoto(url, lado) {
+    var original = url.replace(/-\d+x\d+(\.(?:png|jpe?g|webp))$/i, '$1');
+    var lista = [];
+    (original === url ? [url] : [original, url]).forEach(function (u) {
       lista.push('https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/^https?:\/\//, '')) +
-                 '&w=720&h=720&fit=inside&output=jpg&bg=white&q=85');
+                 '&w=' + lado + '&h=' + lado + '&fit=inside&output=jpg&bg=white&q=85');
       lista.push(u);
       lista.push('https://corsproxy.io/?url=' + encodeURIComponent(u));
     });
     return lista;
   }
 
-  async function fotoLancamento(url) {
+  async function fotoLancamento(url, lado) {
     if (!url) return null;
-    var alvos = candidatosFoto(url);
+    var alvos = candidatosFoto(url, lado);
     for (var i = 0; i < alvos.length; i++) {
       try {
         var r = await fetch(alvos[i], { cache: 'force-cache', signal: AbortSignal.timeout(15000) });
@@ -252,7 +302,7 @@
         var blob = await r.blob();
         if (!blob || blob.size < 200 || !/^image\//.test(blob.type || 'image/')) continue;
         var bmp = await createImageBitmap(blob);
-        var esc = Math.min(1, 720 / Math.max(bmp.width, bmp.height));
+        var esc = Math.min(1, lado / Math.max(bmp.width, bmp.height));
         var cv = document.createElement('canvas');
         cv.width = Math.max(1, Math.round(bmp.width * esc));
         cv.height = Math.max(1, Math.round(bmp.height * esc));
@@ -261,7 +311,7 @@
         ctx.fillRect(0, 0, cv.width, cv.height);
         ctx.drawImage(bmp, 0, 0, cv.width, cv.height);
         bmp.close && bmp.close();
-        var saida = await new Promise(function (ok) { cv.toBlob(ok, 'image/jpeg', 0.85); });
+        var saida = await new Promise(function (ok) { cv.toBlob(ok, 'image/jpeg', 0.86); });
         cv.width = cv.height = 0;
         return new Uint8Array(await saida.arrayBuffer());
       } catch (e) { /* tenta o próximo */ }
@@ -270,118 +320,171 @@
   }
 
   function quebrarLinhas(txt, fonte, tam, largura, maxLinhas) {
-    var palavras = txt.split(/\s+/), linhas = [], atual = '';
-    palavras.forEach(function (w) {
-      var t = atual ? atual + ' ' + w : w;
-      if (fonte.widthOfTextAtSize(t, tam) <= largura || !atual) atual = t;
-      else { linhas.push(atual); atual = w; }
+    var linhas = [];
+    String(txt || '').split('\n').forEach(function (par) {
+      var atual = '';
+      par.split(/\s+/).filter(Boolean).forEach(function (w) {
+        var t = atual ? atual + ' ' + w : w;
+        if (fonte.widthOfTextAtSize(t, tam) <= largura || !atual) atual = t;
+        else { linhas.push(atual); atual = w; }
+      });
+      if (atual) linhas.push(atual);
     });
-    if (atual) linhas.push(atual);
-    if (linhas.length > maxLinhas) {
-      linhas = linhas.slice(0, maxLinhas);
-      var u = linhas[maxLinhas - 1];
-      while (u.length > 3 && fonte.widthOfTextAtSize(u + '…', tam) > largura) u = u.slice(0, -1);
-      linhas[maxLinhas - 1] = u + '…';
+    if (maxLinhas != null && linhas.length > maxLinhas) {
+      linhas = linhas.slice(0, Math.max(0, maxLinhas));
+      if (linhas.length) {
+        var u = linhas[linhas.length - 1];
+        while (u.length > 3 && fonte.widthOfTextAtSize(u + '…', tam) > largura) u = u.slice(0, -1);
+        linhas[linhas.length - 1] = u + '…';
+      }
     }
     return linhas;
   }
 
+  function mm(a) { return a && a.length ? a.join(' × ') + ' mm' : ''; }
+
   // Desenha as páginas de lançamentos a partir do índice `inicio` (0 = primeira página do PDF)
-  async function desenharLancamentos(pdf, PDFLib, fonte, fonteNeg, grupos, fotos, inicio) {
+  async function desenharLancamentos(pdf, PDFLib, fonte, fonteNeg, grupos, fotos, inicio, icms) {
     var rgb = PDFLib.rgb;
     var navy = rgb(0.106, 0.227, 0.361), creme = rgb(0.961, 0.898, 0.839), ouro = rgb(0.941, 0.627, 0.188);
-    var M = 30, VAO = 12, TOPO = PH - 78, BASE = 40, COLS = 2, LINS = 3;
-    var cw = (PW - M * 2 - VAO * (COLS - 1)) / COLS;
-    var ch = (TOPO - BASE - VAO * (LINS - 1)) / LINS;
-    var idx = inicio, imgCache = {};
+    var branco = rgb(1, 1, 1), cinzaFoto = rgb(0.965, 0.957, 0.945), linha = rgb(0.86, 0.82, 0.76);
+    var M = 28, VAO = 14, TOPO = PH - 80, BASE = 34;
+    var bw = PW - M * 2, bh = (TOPO - BASE - VAO) / 2;
+    var rotIcms = (ROTULO_ICMS[icms] || ROTULO_ICMS.p18).texto;
+    var cache = {}, idx = inicio;
 
-    function rgbArr(a) { return rgb(a[0], a[1], a[2]); }
+    function cor(a) { return rgb(a[0], a[1], a[2]); }
+    async function imagem(ref, k) {
+      var chave = ref + ':' + k;
+      if (chave in cache) return cache[chave];
+      var b = fotos[ref] && fotos[ref][k];
+      try { cache[chave] = b ? await pdf.embedJpg(b) : null; } catch (e) { cache[chave] = null; }
+      return cache[chave];
+    }
+    function encaixar(page, img, x, y, w, h) {
+      page.drawRectangle({ x: x, y: y, width: w, height: h, color: branco, borderColor: linha, borderWidth: 0.5 });
+      if (!img) return false;
+      var k = Math.min((w - 8) / img.width, (h - 8) / img.height);
+      var iw = img.width * k, ih = img.height * k;
+      page.drawImage(img, { x: x + (w - iw) / 2, y: y + (h - ih) / 2, width: iw, height: ih });
+      return true;
+    }
+    function texto(page, t, x, y, tam, f, c, op) {
+      page.drawText(limpar(t), { x: x, y: y, size: tam, font: f, color: c || navy, opacity: op == null ? 1 : op });
+    }
 
     for (var g = 0; g < grupos.length; g++) {
       var grupo = grupos[g], nPag = paginasDoGrupo(grupo);
       for (var pg = 0; pg < nPag; pg++) {
         var page = pdf.insertPage(idx++);
         page.setSize(PW, PH);
-        var links = [];
+
+        // cabeçalho
         page.drawRectangle({ x: 0, y: 0, width: PW, height: PH, color: creme });
-        page.drawRectangle({ x: 0, y: PH - 58, width: PW, height: 58, color: navy });
-        page.drawRectangle({ x: 0, y: PH - 61, width: PW, height: 3, color: ouro });
-        page.drawText('LANÇAMENTOS 2026', { x: M, y: PH - 32, size: 17, font: fonteNeg, color: rgb(1, 1, 1) });
-        var sub = limpar(grupo.titulo) + (nPag > 1 ? '  ·  ' + (pg + 1) + '/' + nPag : '');
-        page.drawText(sub, { x: M, y: PH - 47, size: 8.5, font: fonteNeg, color: ouro });
+        page.drawRectangle({ x: 0, y: PH - 60, width: PW, height: 60, color: navy });
+        page.drawRectangle({ x: 0, y: PH - 63, width: PW, height: 3, color: ouro });
+        texto(page, 'LANÇAMENTOS 2026 · 2ª ONDA', M, PH - 33, 16, fonteNeg, branco);
+        texto(page, grupo.titulo + (nPag > 1 ? '  ·  ' + (pg + 1) + '/' + nPag : ''), M, PH - 49, 9, fonteNeg, ouro);
+        var rot = limpar('Preços: ' + rotIcms + ' · sem IPI');
+        texto(page, rot, PW - M - fonteNeg.widthOfTextAtSize(rot, 8), PH - 33, 8, fonteNeg, rgb(0.973, 0.769, 0));
         var marca = 'Xalingo Brinquedos';
-        page.drawText(marca, { x: PW - M - fonte.widthOfTextAtSize(marca, 8), y: PH - 32, size: 8, font: fonte, color: rgb(1, 1, 1), opacity: 0.7 });
+        texto(page, marca, PW - M - fonte.widthOfTextAtSize(marca, 7.5), PH - 49, 7.5, fonte, branco, 0.7);
 
         var itens = grupo.itens.slice(pg * LANCAMENTOS.porPagina, (pg + 1) * LANCAMENTOS.porPagina);
         for (var i = 0; i < itens.length; i++) {
           var p = itens[i];
-          var col = i % COLS, lin = Math.floor(i / COLS);
-          var x = M + col * (cw + VAO), yTopo = TOPO - lin * (ch + VAO), y = yTopo - ch;
+          var x = M, yTopo = TOPO - i * (bh + VAO), y = yTopo - bh;
+          var corTag = cor(TAG_LANC[p.tagc] || TAG_LANC.lanc);
 
-          page.drawRectangle({ x: x, y: y, width: cw, height: ch, color: rgb(1, 1, 1),
-                               borderColor: rgb(0.85, 0.80, 0.74), borderWidth: 0.6 });
+          page.drawRectangle({ x: x, y: y, width: bw, height: bh, color: branco, borderColor: linha, borderWidth: 0.6 });
+          page.drawRectangle({ x: x, y: y, width: 4, height: bh, color: corTag });
 
-          // foto
-          var areaH = ch - 78, areaW = cw - 20, ax = x + 10, ay = yTopo - 10 - areaH;
-          var bytes = fotos[p.ref];
-          if (bytes) {
-            try {
-              var img = imgCache[p.ref] || (imgCache[p.ref] = await pdf.embedJpg(bytes));
-              var k = Math.min(areaW / img.width, areaH / img.height);
-              var w = img.width * k, h = img.height * k;
-              page.drawImage(img, { x: ax + (areaW - w) / 2, y: ay + (areaH - h) / 2, width: w, height: h });
-            } catch (e) { bytes = null; }
+          // ── coluna das fotos ──
+          var P = 12, fx = x + P + 4, fw = 226;
+          var thumbs = Math.max(0, Math.min(2, (p.fotos || []).length - 1));
+          var th = thumbs ? 76 : 0, gap = thumbs ? 8 : 0;
+          var fh = bh - P * 2 - th - gap;
+          var principal = await imagem(p.ref, 0);
+          if (!encaixar(page, principal, fx, yTopo - P - fh, fw, fh)) {
+            var sf = 'Foto em breve';
+            texto(page, sf, fx + (fw - fonte.widthOfTextAtSize(sf, 9)) / 2, yTopo - P - fh / 2 - 3, 9, fonte, navy, 0.4);
           }
-          if (!bytes) {
-            page.drawRectangle({ x: ax, y: ay, width: areaW, height: areaH, color: rgb(0.95, 0.93, 0.90) });
-            var semFoto = 'Foto em breve';
-            page.drawText(semFoto, { x: ax + (areaW - fonte.widthOfTextAtSize(semFoto, 8)) / 2, y: ay + areaH / 2 - 3,
-                                     size: 8, font: fonte, color: navy, opacity: 0.4 });
+          for (var t = 0; t < thumbs; t++) {
+            var tw = (fw - 8) / 2;
+            encaixar(page, await imagem(p.ref, t + 1), fx + t * (tw + 8), y + P, tw, th);
           }
 
-          // selo: tag da 2ª onda ou categoria
-          var catInfo = CAT_LANC[p.cat] || { nome: p.cat || '', cor: [0.4, 0.4, 0.4] };
-          var selo = limpar(p.tag ? p.tag : catInfo.nome).toUpperCase();
-          var corSelo = p.tag ? (TAG_LANC[p.tagc] || TAG_LANC.lanc) : catInfo.cor;
-          var sw = fonteNeg.widthOfTextAtSize(selo, 6.2) + 10;
-          page.drawRectangle({ x: x + 10, y: yTopo - 22, width: sw, height: 13, color: rgbArr(corSelo) });
-          page.drawText(selo, { x: x + 15, y: yTopo - 18, size: 6.2, font: fonteNeg, color: rgb(1, 1, 1) });
+          // ── coluna de dados ──
+          var cx = fx + fw + 18, cw = x + bw - P - cx, cy = yTopo - P;
 
-          // textos
-          var ty = ay - 13;
-          page.drawText('REF ' + limpar(p.ref), { x: x + 10, y: ty, size: 7, font: fonteNeg, color: navy, opacity: 0.5 });
-          ty -= 12;
-          quebrarLinhas(limpar(p.nome), fonteNeg, 9.2, cw - 20, 2).forEach(function (l) {
-            page.drawText(l, { x: x + 10, y: ty, size: 9.2, font: fonteNeg, color: navy });
-            ty -= 11;
+          // selos
+          var selos = [{ txt: limpar(p.tag).toUpperCase(), c: corTag }];
+          if (p.estoque) selos.push({ txt: 'PRONTA ENTREGA', c: rgb(0.16, 0.48, 0.25) });
+          var sx = cx;
+          selos.forEach(function (sl) {
+            var w = fonteNeg.widthOfTextAtSize(sl.txt, 6.6) + 12;
+            page.drawRectangle({ x: sx, y: cy - 14, width: w, height: 14, color: sl.c });
+            texto(page, sl.txt, sx + 6, cy - 9.8, 6.6, fonteNeg, branco);
+            sx += w + 5;
           });
-          var info = [];
-          if (p.idade) info.push(limpar(p.idade));
-          if (p.delivery) info.push('Entrega: ' + limpar(p.delivery));
-          if (info.length) {
-            page.drawText(info.join('  ·  '), { x: x + 10, y: y + (p.aviso ? 20 : 9), size: 7.2, font: fonte, color: navy, opacity: 0.72 });
+          cy -= 28;
+
+          texto(page, 'REF. ' + p.ref + (p.proj ? '   ·   PROJETO ' + p.proj : ''), cx, cy, 7.6, fonteNeg, navy, 0.55);
+          cy -= 16;
+          quebrarLinhas(limpar(p.nome), fonteNeg, 13.5, cw, 2).forEach(function (l) {
+            texto(page, l, cx, cy, 13.5, fonteNeg, navy); cy -= 16;
+          });
+          cy -= 3;
+
+          // rodapé do bloco: preço + ficha técnica (desenhados de baixo para cima)
+          var fichas = [
+            ['EAN', p.ean], ['Idade', p.idade], ['Embalagem', mm(p.log && p.log.emb)],
+            ['Caixa master', mm(p.log && p.log.cx)], ['Qtd / caixa', p.log && p.log.qtd ? p.log.qtd + ' un.' : ''],
+            ['Entrega', p.entrega]
+          ].filter(function (f) { return f[1]; });
+          var colW = (cw - 10) / 2, linhaH = 22, nLin = Math.ceil(fichas.length / 2);
+          var fichaTopo = y + P + nLin * linhaH;
+          fichas.forEach(function (f, k) {
+            var fxk = cx + (k % 2) * (colW + 10), fyk = fichaTopo - Math.floor(k / 2) * linhaH;
+            page.drawRectangle({ x: fxk, y: fyk - linhaH + 2, width: colW, height: 0.5, color: linha });
+            texto(page, f[0].toUpperCase(), fxk, fyk - 8, 6, fonteNeg, navy, 0.5);
+            texto(page, quebrarLinhas(limpar(f[1]), fonteNeg, 8.4, colW, 1)[0] || '', fxk, fyk - 17, 8.4, fonteNeg, navy);
+          });
+
+          var valor = p.preco && typeof p.preco[icms] === 'number' && p.preco[icms] > 0 ? p.preco[icms] : null;
+          var pTopo = fichaTopo + 8 + 38;
+          page.drawRectangle({ x: cx, y: pTopo - 38, width: cw, height: 38, color: navy });
+          texto(page, 'PREÇO UNITÁRIO · ' + rotIcms.toUpperCase() + ' · SEM IPI', cx + 10, pTopo - 13, 6.2, fonteNeg, branco, 0.7);
+          var vtxt = valor ? 'R$ ' + valor.toFixed(2).replace('.', ',') : 'Sob consulta';
+          texto(page, vtxt, cx + 10, pTopo - 31, valor ? 16 : 12, fonteNeg, valor ? rgb(1, 0.85, 0.45) : branco);
+          if (p.log && p.log.qtd && valor) {
+            var cxTxt = 'Caixa com ' + p.log.qtd + ' un.: R$ ' + (valor * p.log.qtd).toFixed(2).replace('.', ',');
+            texto(page, cxTxt, cx + cw - 10 - fonte.widthOfTextAtSize(limpar(cxTxt), 7.4), pTopo - 29, 7.4, fonte, branco, 0.8);
           }
+
+          // aviso (acima do preço) e descrição no espaço que sobrar
+          var limite = pTopo + 8;
+          var avisoLinhas = [], avH = 0;
           if (p.aviso) {
-            page.drawText('! ' + limpar(p.aviso), { x: x + 10, y: y + 9, size: 7, font: fonteNeg, color: rgb(0.70, 0.40, 0) });
+            avisoLinhas = quebrarLinhas(limpar(p.aviso.texto), fonte, 7.4, cw - 18, 3);
+            avH = 14 + avisoLinhas.length * 9.5 + 6;
           }
-          if (p.site) links.push({ url: p.site, rect: [x, y, x + cw, yTopo] });
+          var descMax = Math.floor((cy - limite - (avH ? avH + 8 : 0)) / 11);
+          quebrarLinhas(limpar(p.desc), fonte, 8.8, cw, Math.max(0, descMax)).forEach(function (l) {
+            texto(page, l, cx, cy - 2, 8.8, fonte, navy, 0.85); cy -= 11;
+          });
+          if (p.aviso) {
+            var aTopo = limite + avH;
+            page.drawRectangle({ x: cx, y: limite, width: cw, height: avH, color: rgb(1, 0.953, 0.847),
+                                 borderColor: rgb(0.973, 0.62, 0.11), borderWidth: 0.8 });
+            texto(page, '! ' + p.aviso.titulo, cx + 9, aTopo - 12, 7.6, fonteNeg, rgb(0.54, 0.35, 0.05));
+            avisoLinhas.forEach(function (l, k) {
+              texto(page, l, cx + 9, aTopo - 23 - k * 9.5, 7.4, fonte, rgb(0.42, 0.29, 0.06));
+            });
+          }
         }
 
-        page.drawText(limpar('Preços conforme a tabela vigente · clique no produto para ver a ficha completa'), {
-          x: M, y: 20, size: 7, font: fonte, color: navy, opacity: 0.45
-        });
-
-        try {
-          if (links.length) {
-            var ctx = pdf.context;
-            page.node.set(PDFLib.PDFName.of('Annots'), ctx.obj(links.map(function (l) {
-              return ctx.register(ctx.obj({
-                Type: 'Annot', Subtype: 'Link', Rect: l.rect, Border: [0, 0, 0],
-                A: { Type: 'Action', S: 'URI', URI: PDFLib.PDFString.of(l.url) }
-              }));
-            })));
-          }
-        } catch (e) { /* sem links */ }
+        texto(page, 'Preços sujeitos a alteração sem aviso prévio · medidas C × L × A', M, 18, 7, fonte, navy, 0.45);
       }
     }
     return idx - inicio;
@@ -636,7 +739,7 @@
       '<div class="xpdf-sub">Capa, sumário e as 7 categorias num PDF só.</div>' +
       '<div class="xpdf-rot">Tabela de preços</div>' +
       '<div class="xpdf-chips">' + chips + '</div>' +
-      '<label class="xpdf-chk"><input type="checkbox" id="xpdf-lanc" checked> Incluir <b>Lançamentos 2026</b> logo após o sumário</label>' +
+      '<label class="xpdf-chk"><input type="checkbox" id="xpdf-lanc" checked> Incluir os <b>lançamentos da 2ª onda</b> logo após o sumário</label>' +
       '<div class="xpdf-rot">Qualidade <span>quanto maior, mais demora e mais pesa</span></div>' +
       ops +
       '<button class="xpdf-fech">Cancelar</button>'
@@ -713,15 +816,20 @@
         gruposLanc.forEach(function (g) { paginasLanc += paginasDoGrupo(g); });
         var todosLanc = [];
         gruposLanc.forEach(function (g) { g.itens.forEach(function (p) { todosLanc.push(p); }); });
-        var filaFoto = todosLanc.filter(function (p) { return p.img; }), feitas = 0;
+        var filaFoto = [], feitas = 0;
+        todosLanc.forEach(function (p) {
+          fotosLanc[p.ref] = [];
+          (p.fotos || []).forEach(function (u, k) { filaFoto.push({ p: p, k: k, u: u }); });
+        });
+        var totalFotos = filaFoto.length || 1;
         async function trabalhador() {
           while (filaFoto.length) {
             if (cancelado) return;
-            var p = filaFoto.shift();
-            fotosLanc[p.ref] = await fotoLancamento(p.img);
-            if (!fotosLanc[p.ref]) semFotoLanc++;
+            var t = filaFoto.shift();
+            t.p && (fotosLanc[t.p.ref][t.k] = await fotoLancamento(t.u, t.k ? 480 : 1000));
+            if (!t.k && !fotosLanc[t.p.ref][0]) semFotoLanc++;
             feitas++;
-            passo(8 + feitas / todosLanc.length * 10, 'Fotos dos lan\u00e7amentos\u2026 ' + feitas + '/' + todosLanc.length);
+            passo(8 + feitas / totalFotos * 10, 'Fotos dos lançamentos… ' + feitas + '/' + totalFotos);
           }
         }
         await Promise.all([1, 2, 3, 4, 5, 6].map(trabalhador));
@@ -794,12 +902,10 @@
       // seções: as da página aberta (traduzidas); o que faltar vem da própria página da categoria
       if (paginasLanc) {
         passo(93, 'Desenhando os lan\u00e7amentos\u2026');
-        await desenharLancamentos(pdf, PDFLib, fonte, fonteNeg, gruposLanc, fotosLanc, 1);
+        await desenharLancamentos(pdf, PDFLib, fonte, fonteNeg, gruposLanc, fotosLanc, 1, icms);
       }
       var secoes = lerSecoesDaSidebar();
-      secoes[LANCAMENTOS.arquivo] = gruposLanc.map(function (g) {
-        return { id: g.id, nome: g.id === 'onda2' ? '2\u00aa Onda' : 'Todos os lan\u00e7amentos' };
-      });
+      secoes[LANCAMENTOS.arquivo] = gruposLanc.map(function (g) { return { id: g.id, nome: limpar(g.titulo) }; });
       blocos.forEach(function (b) {
         var k = b.cat.arquivo.toLowerCase();
         if (!(secoes[k] && secoes[k].length)) secoes[k] = b.secoes;
