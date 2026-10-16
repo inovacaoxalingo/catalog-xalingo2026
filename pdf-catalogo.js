@@ -26,6 +26,10 @@
 
   var CAPA = 'capa.jpg';
 
+  // Disponibilidade: o que NÃO entra no PDF (gerado a partir da Tabela de Preços).
+  // Páginas inteiras somem; nas mistas, um retângulo branco cobre só o produto.
+  var OCULTAR = 'pdf-ocultar.json';
+
   // Lançamentos: só a 2ª onda, lida da página dela (mesmo domínio github.io), com
   // fotos, medidas e avisos. Entram logo depois do sumário, 2 produtos por página.
   // Se a página não responder, usa os itens onda:2 da lancamentos.html deste catálogo.
@@ -114,7 +118,7 @@
     var imgs = Array.prototype.slice.call(doc.querySelectorAll('img.page-cover, img.page-img'));
     var paginas = imgs.map(function (im) {
       var src = im.getAttribute('src');
-      return { url: new URL(src, location.href).href, chave: src.split('/').pop().replace(/\.[a-z]+$/i, '') };
+      return { url: new URL(src, location.href).href, src: src.replace(/^\.\//, ''), chave: src.split('/').pop().replace(/\.[a-z]+$/i, '') };
     });
 
     // âncora de seção -> índice da imagem onde a seção começa
@@ -152,6 +156,38 @@
   // da página aberta agora (já traduzida pelo idioma ativo)
   function lerSecoesDaSidebar() {
     return secoesDe(document, (location.pathname.split('/').pop() || 'index.html').toLowerCase());
+  }
+
+  /* ── Disponibilidade ──────────────────────────────────────────────────── */
+
+  async function lerOcultar() {
+    try {
+      var r = await fetch(OCULTAR, { cache: 'no-cache' });
+      if (!r.ok) return null;
+      var j = await r.json();
+      j.paginasRemovidas = j.paginasRemovidas || {};
+      j.faixasCobertas = j.faixasCobertas || {};
+      j.lancamentosOcultos = (j.lancamentosOcultos || []).map(function (x) { return String(x).replace('.', ''); });
+      return j;
+    } catch (e) { return null; }   // sem o arquivo, sai o catálogo completo
+  }
+
+  // tira as páginas removidas e reposiciona as âncoras do sumário na próxima página que ficou
+  function filtrarCategoria(b, oc) {
+    if (!oc) return b;
+    var manter = [], novoIdx = [], n = 0;
+    b.paginas.forEach(function (p, i) {
+      novoIdx[i] = n;
+      if (oc.paginasRemovidas[p.src]) return;
+      p.cobrir = (oc.faixasCobertas[p.src] || {}).cobrir || [];
+      manter.push(p); n++;
+    });
+    var anc = {};
+    Object.keys(b.ancoras).forEach(function (id) {
+      var k = novoIdx[b.ancoras[id]];
+      if (k < manter.length) anc[id] = k;
+    });
+    return { cat: b.cat, paginas: manter, ancoras: anc, secoes: b.secoes };
   }
 
   /* ── Lançamentos · 2ª onda ───────────────────────────────────────────── */
@@ -197,7 +233,7 @@
         var x = extra[p.ref] || {};
         return {
           ref: p.ref, proj: p.proj || '', nome: p.nome, cat: p.cat,
-          tag: p.tag || 'LANÇAMENTO', tagc: p.tagc || 'lanc', ean: p.ean || '',
+          tag: p.tag || 'LANÇAMENTO', tagc: p.tagc || 'lanc', ean: p.ean || '', url: p.url || '',
           desc: p.desc || x.desc || '',
           aviso: p.aviso ? (typeof p.aviso === 'string' ? { titulo: p.aviso, texto: '' } : p.aviso) : null,
           fotos: (p.imgs || []).slice(0, LANCAMENTOS.fotos).map(function (f) { return /^https?:/.test(f) ? f : base + f; }),
@@ -207,6 +243,10 @@
           estoque: p.estoque !== false
         };
       });
+      await Promise.all(itens.map(async function (it) {
+        var atuais = await fotosAtuais(it.url);
+        if (atuais) it.fotos = atuais.slice(0, LANCAMENTOS.fotos);
+      }));
       var grupos = secoes.map(function (sc) {
         return { id: 'onda2-' + sc.id, titulo: sc.titulo,
                  itens: itens.filter(function (p) { return sc.id === '*' || p.cat === sc.id; }) };
@@ -229,14 +269,38 @@
     }
   }
 
+  // Mesma sincronização da página da 2ª onda: lê as imagens que estão hoje no post do produto
+  var WP_API = 'https://produtosxalingo.oneweb.com.br/wp-json/wp/v2';
+  async function fotosAtuais(urlPost) {
+    if (!urlPost) return null;
+    try {
+      var slug = urlPost.replace(/\/+$/, '').split('/').pop();
+      var r = await fetch(WP_API + '/posts?slug=' + encodeURIComponent(slug) + '&_fields=id,content',
+                          { signal: AbortSignal.timeout(10000) });
+      if (!r.ok) return null;
+      var post = (await r.json())[0];
+      if (!post || !post.content) return null;
+      var vistos = {}, fotos = [];
+      (post.content.rendered.match(/<img\b[^>]*>/gi) || []).forEach(function (tag) {
+        var m = /\ssrc=["']([^"']+)["']/i.exec(tag);
+        if (!m || !/\/wp-content\/uploads\//.test(m[1]) || /logo|fundo_blog/i.test(m[1])) return;
+        var chave = m[1].replace(/-\d+x\d+(\.(?:png|jpe?g|webp))$/i, '$1');
+        if (vistos[chave]) return;
+        vistos[chave] = 1; fotos.push(m[1]);
+      });
+      return fotos.length ? fotos : null;
+    } catch (e) { return null; }
+  }
+
   function paginasDoGrupo(g) { return Math.ceil(g.itens.length / LANCAMENTOS.porPagina); }
 
   // Fotos ficam no WordPress (oneweb), que não libera CORS: tenta o proxy de imagem
-  // primeiro (já entrega JPEG com fundo branco), depois direto. Original antes do recorte -1024x….
+  // primeiro (já entrega JPEG com fundo branco), depois direto. Usa a foto listada (a mesma que o site
+  // mostra); o arquivo original sem o sufixo -1024x… pode ser uma versão antiga e fica só de reserva.
   function candidatosFoto(url, lado) {
     var original = url.replace(/-\d+x\d+(\.(?:png|jpe?g|webp))$/i, '$1');
     var lista = [];
-    (original === url ? [url] : [original, url]).forEach(function (u) {
+    (original === url ? [url] : [url, original]).forEach(function (u) {
       lista.push('https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/^https?:\/\//, '')) +
                  '&w=' + lado + '&h=' + lado + '&fit=inside&output=jpg&bg=white&q=85');
       lista.push(u);
@@ -624,7 +688,7 @@
     }).join('');
     var f = caixa(
       '<div class="xpdf-tit">Baixar o catálogo completo</div>' +
-      '<div class="xpdf-sub">Capa, sumário e as 7 categorias num PDF só.</div>' +
+      '<div class="xpdf-sub">Capa, sumário e as 7 categorias num PDF só.<span id="xpdf-base"></span></div>' +
       '<label class="xpdf-chk"><input type="checkbox" id="xpdf-lanc" checked><span>Incluir os <b>lançamentos da 2ª onda</b> logo após o sumário</span></label>' +
       '<div class="xpdf-rot">Qualidade <span>quanto maior, mais demora e mais pesa</span></div>' +
       ops +
@@ -632,6 +696,10 @@
     );
     f.querySelector('.xpdf-fech').onclick = fechar;
     f.addEventListener('click', function (e) { if (e.target === f) fechar(); });
+    lerOcultar().then(function (oc) {
+      var el = document.getElementById('xpdf-base');
+      if (oc && el) el.innerHTML = '<br>Só produtos disponíveis · base: <b>' + (oc.fonte || 'tabela de preços') + '</b>.';
+    });
     Array.prototype.forEach.call(f.querySelectorAll('.xpdf-op'), function (b) {
       b.onclick = function () {
         var chk = document.getElementById('xpdf-lanc');
@@ -687,11 +755,20 @@
         passo(3 + (i + 1) / CATEGORIAS.length * 5, 'Lendo as categorias… ' + (i + 1) + '/7');
       }
 
+      var ocultar = await lerOcultar();
+      blocos = blocos.map(function (b) { return filtrarCategoria(b, ocultar); });
+
       // lançamentos entram logo depois do sumário
       var gruposLanc = [], paginasLanc = 0, fotosLanc = {}, semFotoLanc = 0;
       if (comLanc) {
         passo(8, 'Lendo os lan\u00e7amentos\u2026');
         try { gruposLanc = await lerLancamentos(); } catch (e) { gruposLanc = []; }
+        if (ocultar && ocultar.lancamentosOcultos.length) {
+          gruposLanc = gruposLanc.map(function (g) {
+            return { id: g.id, titulo: g.titulo, itens: g.itens.filter(function (p) {
+              return ocultar.lancamentosOcultos.indexOf(String(p.ref).replace('.', '')) < 0; }) };
+          }).filter(function (g) { return g.itens.length; });
+        }
         gruposLanc.forEach(function (g) { paginasLanc += paginasDoGrupo(g); });
         var todosLanc = [];
         gruposLanc.forEach(function (g) { g.itens.forEach(function (p) { todosLanc.push(p); }); });
@@ -726,7 +803,7 @@
       }
       blocos.forEach(function (b) {
         plano.push({ cat: b.cat, primeira: numero, total: b.paginas.length, ancoras: b.ancoras });
-        b.paginas.forEach(function (p) { fila.push({ url: p.url }); });
+        b.paginas.forEach(function (p) { fila.push({ url: p.url, cobrir: p.cobrir || [] }); });
         numero += b.paginas.length;
       });
       var totalPag = fila.length + 1 + paginasLanc;
@@ -766,6 +843,10 @@
           var page = pdf.addPage();
           page.setSize(PW, PH);
           page.drawImage(img, { x: 0, y: 0, width: PW, height: PH });
+          (fila[k].cobrir || []).forEach(function (c) {   // [x0, y0, x1, y1] em % da página, origem no topo
+            page.drawRectangle({ x: c[0] / 100 * PW, y: PH - c[3] / 100 * PH,
+                                 width: (c[2] - c[0]) / 100 * PW, height: (c[3] - c[1]) / 100 * PH, color: rgb(1, 1, 1) });
+          });
         } catch (e) {
           falhas++;
           pdf.addPage().setSize(PW, PH);
