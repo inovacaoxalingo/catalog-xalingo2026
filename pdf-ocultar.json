@@ -1,5 +1,5 @@
 {
- "atualizado": "2026-10-16",
+ "atualizado": "2026-10-20",
  "fonte": "Tabela de Preços Xalingo B2026 – 16.10.26",
  "regra": "Some do PDF: chegada futura (Previsão Entrega Lançamentos), lançamento sem estoque e sem data (exceto 2016.5), produto fora da tabela e \"Aguardar data de Lançamento\" (Folha2). Linha com estoque zero fica.",
  "como_funciona": "paginasRemovidas = imagem sai inteira do PDF. faixasCobertas = retângulos brancos [x0, y0, x1, y1] em % da página, desenhados por cima do produto. lancamentosOcultos = REFs da 2ª onda que não entram. O site não muda.",
@@ -616,6 +616,23 @@
      61.5,
      7.0,
      91.0
+    ]
+   ]
+  },
+  "img-esportes/esportes-p3.jpg": {
+   "produtos": [
+    {
+     "ref": "2867.6",
+     "produto": "BOLA DE BASQUETE OFICIAL N 7 - LARANJA",
+     "motivo": "sem estoque, não será reposto"
+    }
+   ],
+   "cobrir": [
+    [
+     51.0,
+     0.0,
+     94.0,
+     49.0
     ]
    ]
   }
