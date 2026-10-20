@@ -1973,11 +1973,12 @@
   };
 
   // Refs sem selo de preço/compra (somem do catálogo, do Excel e do PDF)
-  const REFS_OCULTAS = new Set(['55025', '93945']);
+  const REFS_OCULTAS = new Set(['55025', '93945', '6618']);
 
   // Refs indisponíveis: véu branco + rótulo sobre a área do produto.
   // top/left/width/height/textoY em % da PÁGINA (bloco de cima 0–50, de baixo 50–100)
   const REFS_INDISPONIVEIS = {
+    '6618':  { img:'fazdeconta-p6', top:0, left:0, width:94, height:50, textoY:25, texto:'Indisponível no momento' },
     '93945': { img:'fazdeconta-p8', top:50, left:0, width:94, height:50, textoY:72, texto:'Indisponível no momento' }
   };
 
